@@ -10,7 +10,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from simulation import Simulation, Tank  # noqa: E402
+from simulation import Obstacle, Simulation, Slit, Tank  # noqa: E402
 
 
 def test_no_slits_field_stays_finite():
@@ -22,3 +22,18 @@ def test_no_slits_field_stays_finite():
     sim.step(0.05)
     assert np.isfinite(tank.distance_map).all()
     assert np.isfinite(tank.u).all() and np.abs(tank.u).max() > 0
+
+
+def test_obstacles_block_waves_with_open_boundaries():
+    """Obstacles are regions where u = 0; with 'open' boundaries the obstacle mask used to be skipped entirely."""
+    tank = Tank(20, 20, 60, [Slit((10, 0), 0.5, 10, 1, 2)])
+    sim = Simulation(tank)
+    tank.add_obstacle(Obstacle((10, 6), 2.0))
+    inside = (tank.X - 10) ** 2 + (tank.Y - 6) ** 2 <= 2.0 ** 2
+    for boundary in ("reflective", "absorbing", "open"):
+        sim.reset()
+        tank.set_boundary_type(boundary)
+        for _ in range(20):
+            sim.step(0.05)
+        assert np.abs(tank.u).max() > 0
+        assert np.abs(tank.u[inside]).max() == 0, boundary

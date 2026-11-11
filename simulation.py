@@ -105,15 +105,15 @@ class Tank:
         # Apply boundary conditions
         if self.boundary_type == "reflective":
             u_next *= self.boundary[1:-1, 1:-1]
-        elif self.boundary_type == "absorbing":
-            # Only apply obstacle boundaries, allow waves to be absorbed at edges
+        else:
+            # "absorbing" and "open": only apply obstacle boundaries (absorbing edges are damped below; open edges
+            # get no extra condition). Obstacles must block waves in both modes.
             obstacle_mask = self.boundary[1:-1, 1:-1].copy()
             obstacle_mask[0, :] = 1
             obstacle_mask[-1, :] = 1
             obstacle_mask[:, 0] = 1
             obstacle_mask[:, -1] = 1
             u_next *= obstacle_mask
-        # For "open" boundaries, we don't apply any additional conditions here
 
         self.u_prev = self.u.copy()
         self.u[1:-1, 1:-1] = u_next
