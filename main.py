@@ -195,6 +195,10 @@ class SimulationGUI(QMainWindow):
 
     def reset_simulation(self):
         self.simulation.reset()
+        # Tank.reset clears the standing-wave mode; keep the selector in step (without re-triggering its handler)
+        self.standing_wave_combo.blockSignals(True)
+        self.standing_wave_combo.setCurrentText("None")
+        self.standing_wave_combo.blockSignals(False)
         self.update_plot()
 
     def add_obstacle(self):

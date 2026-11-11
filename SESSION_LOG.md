@@ -31,3 +31,8 @@
   - `Slit.direction` (hard-coded tank size 20) is never used; wave-packet directions are not normalised.
   - README says c = √(gh); the code uses c = 10·√depth.
 - Not pushed (lead reviews first).
+
+### Fix: standing-wave selector after Reset
+`Tank.reset` clears the standing-wave mode, but the desktop selector kept showing the old mode (choosing the same
+mode again then did nothing). `SimulationGUI.reset_simulation` now sets the selector back to "None".
+Regression test: `tests/test_gui.py` (offscreen PyQt5).
