@@ -96,8 +96,8 @@ class Tank:
         if self.boundary_type == "reflective":
             u_next *= self.boundary[1:-1, 1:-1]
         else:
-            # "absorbing" and "open": only apply obstacle boundaries (absorbing edges are damped below; open edges
-            # get no extra condition). Obstacles must block waves in both modes.
+            # "absorbing" and "open": only apply obstacle boundaries (the walls get absorbing conditions below).
+            # Obstacles must block waves in both modes.
             obstacle_mask = self.boundary[1:-1, 1:-1].copy()
             obstacle_mask[0, :] = 1
             obstacle_mask[-1, :] = 1
@@ -107,6 +107,8 @@ class Tank:
 
         self.u_prev = self.u.copy()
         self.u[1:-1, 1:-1] = u_next
+        if self.boundary_type == "open":
+            self.apply_mur(("left", "right", "bottom", "top"))
 
         # Generate new waves at slits
         for slit in self.slits:
@@ -169,11 +171,8 @@ class Tank:
         # The standing wave is superposed on the displayed field (see field()), not accumulated into u
         self.time = time
 
-        # Handle boundary conditions
-        if self.boundary_type == "open":
-            # Do nothing, allowing waves to pass through edges unaffected
-            pass
-        elif self.boundary_type == "absorbing":
+        # Handle boundary conditions ("open" walls were handled by apply_mur above)
+        if self.boundary_type == "absorbing":
             # Gradual absorption at edges
             edge_width = 10
             edge_factor = np.linspace(0, 1, edge_width)[:, np.newaxis]
@@ -183,6 +182,22 @@ class Tank:
             self.u[:, :edge_width] *= edge_factor.T
             self.u[:, -edge_width:] *= edge_factor[::-1].T
 
+
+    def apply_mur(self, sides):
+        """First-order Mur (Engquist-Majda) absorbing condition on the given walls: the wall cells take the value
+        that lets a wave leave at normal incidence without reflection. Uses u at time n (u_prev, just saved) and the
+        freshly updated interior at n+1 (u)."""
+        old, new = self.u_prev, self.u
+        kx = (self.c * self.dt - self.dx) / (self.c * self.dt + self.dx)
+        ky = (self.c * self.dt - self.dy) / (self.c * self.dt + self.dy)
+        if "left" in sides:
+            new[1:-1, 0] = old[1:-1, 1] + kx * (new[1:-1, 1] - old[1:-1, 0])
+        if "right" in sides:
+            new[1:-1, -1] = old[1:-1, -2] + kx * (new[1:-1, -2] - old[1:-1, -1])
+        if "bottom" in sides:
+            new[0, 1:-1] = old[1, 1:-1] + ky * (new[1, 1:-1] - old[0, 1:-1])
+        if "top" in sides:
+            new[-1, 1:-1] = old[-2, 1:-1] + ky * (new[-2, 1:-1] - old[-1, 1:-1])
 
     def standing_wave(self):
         """Standing-wave mode m at the current time: 0.5 sin(m pi x / W) sin(2 pi t) (zeros if no mode)."""

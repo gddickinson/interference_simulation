@@ -38,14 +38,13 @@ route('about', async () => {
     <li><b>Interference points</b> hold a single grid point at A·sin(2π f t).</li>
     <li><b>Standing-wave modes</b> 1 to 5 superpose 0.5·sin(mπx/W)·sin(2πt) on the displayed field.</li>
     <li><b>Boundaries</b>: <i>reflective</i> holds u = 0 on the walls; <i>absorbing</i> damps the ten outermost
-      cells on each side; <i>open</i> adds no condition at the walls.</li>
+      cells on each side; <i>open</i> makes the walls transparent with the first-order Mur (Engquist–Majda)
+      absorbing condition.</li>
   </ul>
   <div class="callout"><b>Things worth knowing when you read the picture.</b>
     <ul>
       <li>Because sources are prescribed, |u| stays of the order of the source amplitude. The "auto" colour range
         on the Tank page rescales to the field actually present (useful for weak far-field waves).</li>
-      <li>The outer ring of grid cells is never updated by the FDTD stencil, so with <i>open</i> boundaries waves
-        still reflect from the walls; it is not a transparent boundary.</li>
       <li>With <i>absorbing</i> boundaries the edge damping also covers the slits (which sit on the walls), so slit
         sources are much weaker in that mode.</li>
       <li>Reset clears the waves, packets, interference points and standing mode; obstacles stay.</li>

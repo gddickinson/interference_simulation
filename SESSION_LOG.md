@@ -57,3 +57,9 @@ The slit phase used the absolute x coordinate, so the two default bottom slits d
 varied along bottom/top openings. The phase now uses the distance from the wall along the incoming plane wave's
 direction (into the tank), so all slits on a wall are in phase. The unused `Slit.direction` (hard-coded tank size
 20) was removed. Tests: `test_slits_on_one_wall_are_in_phase` + node check.
+
+### Fix 3: open walls are transparent
+The FDTD stencil never updated the outer ring, so "open" walls reflected like fixed ones. They now use the first-order
+Mur (Engquist–Majda) absorbing condition (`Tank.apply_mur`). A Gaussian pulse in an empty tank keeps 0.04 % of its
+energy after t = 3 with open walls (99.6 % with reflective; was 99.6 % with open too). Tests:
+`test_open_walls_do_not_reflect` + node check.

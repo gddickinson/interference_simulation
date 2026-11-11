@@ -66,3 +66,33 @@ def test_slits_on_one_wall_are_in_phase(config):
             values.append(t.u[i, j])
         assert np.abs(t.u).max() > 0
         assert np.allclose(values, values[0], atol=1e-12), values
+
+
+def wave_energy(t):
+    """Discrete wave energy: sum of (du/dt)^2 + c^2 |grad u|^2 over the interior (per unit cell area)."""
+    ut = (t.u - t.u_prev) / t.dt
+    gx = (t.u[1:-1, 2:] - t.u[1:-1, :-2]) / (2 * t.dx)
+    gy = (t.u[2:, 1:-1] - t.u[:-2, 1:-1]) / (2 * t.dy)
+    return float((ut[1:-1, 1:-1] ** 2 + t.c ** 2 * (gx ** 2 + gy ** 2)).sum())
+
+
+def pulse_energy_left(boundary, time=3.0):
+    """A Gaussian pulse released in the middle of an empty tank (no sources, no decay): fraction of its energy still in
+    the tank after `time` (it reaches the walls by t ~ 1 and the corners by ~1.4 at c = 10)."""
+    from simulation import Simulation, Tank
+    t = Tank(20, 20, 100, [], decay_factor=1.0)
+    t.set_boundary_type(boundary)
+    t.u[:] = np.exp(-((t.X - 10) ** 2 + (t.Y - 10) ** 2) / (2 * 0.8 ** 2))
+    t.u_prev[:] = t.u
+    sim = Simulation(t)
+    sim.step(0.05)
+    e0 = wave_energy(t)
+    while sim.time < time:
+        sim.step(0.05)
+    return wave_energy(t) / e0
+
+
+def test_open_walls_do_not_reflect():
+    """'Open' walls must let waves leave: under 3 % of a pulse's energy may come back (they used to reflect fully)."""
+    assert pulse_energy_left("reflective") > 0.5
+    assert pulse_energy_left("open") < 0.03

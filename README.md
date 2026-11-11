@@ -72,8 +72,8 @@ Key aspects of the simulation:
 2. **Boundary Conditions**:
 - Reflective: u = 0 at boundaries
 - Absorbing: Gradual dampening near edges
-- Open: no extra condition at the walls (the outermost grid cells are not updated by the FDTD step, so waves
-  still reflect there; this is not a transparent boundary)
+- Open: transparent walls with the first-order Mur (Engquist-Majda) absorbing boundary condition; a pulse
+  leaving the tank sends back well under 1 % of its energy
 3. **Wave Sources**: slits are prescribed (hard) sources, like the dipper of a ripple tank: every step the cells of
    the opening are set to A·sin(2π(f t − d/λ)), where d is the distance from the wall into the tank (all slits on
    a wall are fed by the same plane wave, so they are in phase), with adjustable amplitude, frequency, wavelength

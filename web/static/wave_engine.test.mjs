@@ -2,7 +2,7 @@
 // scripts/make_js_fixtures.py from web/reference.py running simulation.py), plus the seismic colour map.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildSetup, linspace, createSimulation, FRAME_DT } from './wave_engine.js';
+import { buildSetup, linspace, createSimulation, FRAME_DT, Tank, Simulation } from './wave_engine.js';
 import { SEISMIC_LUT } from './wave_render.js';
 
 const F = JSON.parse(readFileSync(new URL('../../tests/fixtures/wave_reference.json', import.meta.url)));
@@ -79,6 +79,34 @@ ok('slits on one wall oscillate in phase', () => {
       t.u[Math.min(Math.trunc(y / t.dy), N - 1) * N + Math.min(Math.trunc(x / t.dx), N - 1)]);
     v.forEach(a => assert.ok(Math.abs(a - v[0]) < 1e-12, JSON.stringify(cfg) + ' ' + v));
   }
+});
+
+// Energy of a Gaussian pulse left in an empty tank after t = 3 (tests/test_physics.py pulse_energy_left)
+export function pulseEnergyLeft(boundary, time = 3) {
+  const t = new Tank(20, 20, 100, [], { decayFactor: 1 }), N = t.resolution;
+  t.setBoundaryType(boundary);
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++)
+    t.u[i * N + j] = Math.exp(-((t.x[j] - 10) ** 2 + (t.y[i] - 10) ** 2) / (2 * 0.8 ** 2));
+  t.uPrev.set(t.u);
+  const sim = new Simulation(t), energy = () => {
+    let e = 0;
+    for (let i = 1; i < N - 1; i++) for (let j = 1; j < N - 1; j++) {
+      const k = i * N + j, ut = (t.u[k] - t.uPrev[k]) / t.dt;
+      const gx = (t.u[k + 1] - t.u[k - 1]) / (2 * t.dx), gy = (t.u[k + N] - t.u[k - N]) / (2 * t.dy);
+      e += ut ** 2 + t.c ** 2 * (gx ** 2 + gy ** 2);
+    }
+    return e;
+  };
+  sim.step();
+  const e0 = energy();
+  while (sim.time < time) sim.step();
+  return energy() / e0;
+}
+ok('open walls let a pulse leave (< 3 % of its energy left; reflective keeps > 50 %)', () => {
+  assert.ok(pulseEnergyLeft('reflective') > 0.5);
+  const left = pulseEnergyLeft('open');
+  assert.ok(left < 0.03, `open: ${left}`);
+  console.log(`      open walls: ${(100 * left).toFixed(3)} % of the pulse energy left`);
 });
 
 console.log(`wave_engine: ${n} checks passed (${F.cases.length} Python reference cases at ${F.resolution} x ${F.resolution})`);

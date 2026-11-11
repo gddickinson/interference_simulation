@@ -89,6 +89,7 @@ export class Tank {
     }
     uPrev.set(u);
     for (let i = 1; i < n - 1; i++) for (let j = 1; j < n - 1; j++) u[i * n + j] = uNext[i * n + j];
+    if (this.boundaryType === 'open') this.applyMur(['left', 'right', 'bottom', 'top']);
 
     const TWO_PI = 2 * Math.PI;
     for (const s of this.slits) {
@@ -136,6 +137,22 @@ export class Tank {
         u[i * n + a] *= ef[a];
         u[i * n + n - ew + a] *= ef[ew - 1 - a];
       }
+    }
+  }
+
+  // Tank.apply_mur: first-order Mur (Engquist-Majda) absorbing condition on the given walls (old = uPrev = time n).
+  applyMur(sides) {
+    const n = this.resolution, old = this.uPrev, nw = this.u;
+    const kx = (this.c * this.dt - this.dx) / (this.c * this.dt + this.dx);
+    const ky = (this.c * this.dt - this.dy) / (this.c * this.dt + this.dy);
+    for (let i = 1; i < n - 1; i++) {
+      if (sides.includes('left')) nw[i * n] = old[i * n + 1] + kx * (nw[i * n + 1] - old[i * n]);
+      if (sides.includes('right')) nw[i * n + n - 1] = old[i * n + n - 2] + kx * (nw[i * n + n - 2] - old[i * n + n - 1]);
+    }
+    const top = (n - 1) * n;
+    for (let j = 1; j < n - 1; j++) {
+      if (sides.includes('bottom')) nw[j] = old[n + j] + ky * (nw[n + j] - old[j]);
+      if (sides.includes('top')) nw[top + j] = old[top - n + j] + ky * (nw[top - n + j] - old[top + j]);
     }
   }
 
