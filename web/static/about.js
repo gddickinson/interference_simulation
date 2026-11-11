@@ -39,9 +39,10 @@ route('about', async () => {
     <li><b>Interference points</b> hold a single grid point at A·sin(2π f t).</li>
     <li><b>Standing-wave modes</b> 1 to 5 superpose 0.5·sin(mπx/W)·sin(2πt) on the displayed field.</li>
     <li><b>Boundaries</b>: <i>reflective</i> holds u = 0 on the walls; <i>open</i> makes the walls transparent with the
-      first-order Mur (Engquist–Majda) absorbing condition; <i>absorbing</i> uses the same condition plus a gentle
-      ten-cell damping layer along the walls that carry no slits (so slits keep their full strength). A pulse
-      leaving the tank sends back about 0.04 % (open) or 0.5 % (absorbing) of its energy.</li>
+      first-order Mur (Engquist–Majda) absorbing condition; <i>absorbing</i> adds a graded damping layer 6 units wide
+      (quadratic profile, rate 2 per unit time at the wall; dashed line on the Tank page) along the walls that carry
+      no slits, so slits keep their full strength. Measured against a pulse in a much larger tank, open walls
+      reflect about 0.1 % of its energy and absorbing walls about 0.02 %.</li>
   </ul>
   <div class="callout"><b>Things worth knowing when you read the picture.</b>
     <ul>

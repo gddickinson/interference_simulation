@@ -79,3 +79,12 @@ prescribed source cells (±10) are ~50× stronger than the waves they radiate. `
 percentile of |field| (at least 1 % of `Tank.source_amplitude()`), used by `Tank.plot`, the GUI and the web
 (numpy-identical percentile in JS); >50 % of the tank uses at least 10 % of the scale. The web keeps a
 "± largest source amplitude" option. Test: `test_colour_range_shows_the_wave_pattern`.
+
+### Fix 6: absorbing walls clearly better than open
+The 10-cell, 0.005-per-step damping layer was too thin and abrupt to improve on Mur, so "absorbing" behaved like
+"open". The layer is now defined in tank units: 6 units wide, quadratic profile, damping rate 2 per unit time at the
+wall (`SPONGE_WIDTH`, `SPONGE_RATE`), still only on walls without slits, plus Mur. Reflection is measured against the
+same pulse in a 60 x 60 tank (this separates reflections from the wake a 2D pulse leaves anyway): open ~0.1 %,
+absorbing ~0.02 % (2–5x lower at three pulse positions). The Tank page draws the layer's inner edge as a dashed line.
+Tests: `test_absorbing_walls_reflect_less_than_open` (3 positions) + node check. Note: slits within 6 units of a
+slit-free wall sit inside its damping layer (their own cells are not damped, but the waves near them are).

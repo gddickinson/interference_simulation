@@ -9,7 +9,13 @@ export const SLIT_DEFAULTS = { width: 0.5, amplitude: 10, frequency: 1, waveleng
 export const SETUP_SIDES = ['bottom', 'top', 'left', 'right'];   // sim_setup.SIDES
 export const BOUNDARIES = ['reflective', 'absorbing', 'open'];
 export const SIDES = ['left', 'right', 'bottom', 'top'];   // wall names (simulation.SIDES)
-export const SPONGE_CELLS = 10, SPONGE_STRENGTH = 0.005;    // simulation.py absorbing layer
+export const SPONGE_WIDTH = 6.0, SPONGE_RATE = 2.0;         // simulation.py absorbing layer (tank units, 1/time)
+
+// Python's round() (ties to even), used where simulation.py converts a width to whole cells.
+export function roundHalfEven(v) {
+  const f = Math.floor(v), d = v - f;
+  return d > 0.5 ? f + 1 : d < 0.5 ? f : (f % 2 === 0 ? f : f + 1);
+}
 export const COLOUR_PERCENTILE = 95;                        // simulation.COLOUR_PERCENTILE
 
 // numpy.percentile(np.abs(values), p) with the default 'linear' method (same lerp form as numpy, for parity).
@@ -154,10 +160,11 @@ export class Tank {
     return walls;
   }
 
-  // Tank.apply_sponge: quadratic damping layer of SPONGE_CELLS along the given walls (u and uPrev).
+  // Tank.apply_sponge: quadratic damping layer SPONGE_WIDTH wide along the given walls (u and uPrev).
+  spongeCells() { return Math.min(Math.max(1, roundHalfEven(SPONGE_WIDTH / this.dx)), Math.floor(this.resolution / 2)); }
   applySponge(sides) {
-    const n = this.resolution, w = SPONGE_CELLS, f = [];
-    for (let k = 0; k < w; k++) f.push(1 - SPONGE_STRENGTH * ((w - k) / w) ** 2);
+    const n = this.resolution, w = this.spongeCells(), f = [];
+    for (let k = 0; k < w; k++) f.push(1 - SPONGE_RATE * this.dt * ((w - k) / w) ** 2);
     for (const a of [this.u, this.uPrev]) {
       if (sides.includes('bottom')) for (let k = 0; k < w; k++) for (let j = 0; j < n; j++) a[k * n + j] *= f[k];
       if (sides.includes('top')) for (let k = 0; k < w; k++) for (let j = 0; j < n; j++) a[(n - 1 - k) * n + j] *= f[k];

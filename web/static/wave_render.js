@@ -47,12 +47,26 @@ export function drawField(ctx, tank, { range = 1, marks = true, values = null } 
   if (marks) drawMarks(ctx, tank);
 }
 
+// Dashed line at the inner edge of the absorbing layer on each wall without slits.
+function drawSponge(ctx, tank, s) {
+  const walls = tank.slitWalls(), w = tank.spongeCells() * tank.dx, W = tank.width, H = tank.height;
+  const lines = { left: [[w, 0], [w, H]], right: [[W - w, 0], [W - w, H]], bottom: [[0, w], [W, w]], top: [[0, H - w], [W, H - w]] };
+  ctx.save();
+  ctx.setLineDash([6 * s, 6 * s]); ctx.lineWidth = 1.5 * s; ctx.strokeStyle = 'rgba(40,40,60,.55)';
+  for (const [side, [a, b]] of Object.entries(lines)) {
+    if (walls.has(side)) continue;
+    ctx.beginPath(); ctx.moveTo(...toCanvas(ctx, tank, ...a)); ctx.lineTo(...toCanvas(ctx, tank, ...b)); ctx.stroke();
+  }
+  ctx.restore();
+}
+
 export function toCanvas(ctx, tank, x, y) {
   return [x / tank.width * ctx.canvas.width, (1 - y / tank.height) * ctx.canvas.height];
 }
 
 function drawMarks(ctx, tank) {
   const s = ctx.canvas.width / 600;
+  if (tank.boundaryType === 'absorbing' && tank.slitWalls) drawSponge(ctx, tank, s);
   ctx.lineWidth = 2 * s;
   for (const o of tank.obstacles) {
     const [cx, cy] = toCanvas(ctx, tank, ...o.position);

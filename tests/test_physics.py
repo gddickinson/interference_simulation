@@ -134,3 +134,36 @@ def test_colour_range_shows_the_wave_pattern():
     vmax = t.colour_range()
     assert vmax < 0.5 * t.source_amplitude()
     assert (np.abs(t.field()) > 0.1 * vmax).mean() > 0.3
+
+
+def reflected_fraction(boundary, px, py, res=100, time=2.5):
+    """Energy reflected back into the tank by its walls, as a fraction of a Gaussian pulse's energy: the field in the
+    20 x 20 tank minus the same pulse in a 60 x 60 reflective tank (same grid spacing, walls too far away to matter
+    by `time`). This separates reflections from the wake that a 2D pulse leaves behind anyway."""
+    from simulation import Simulation, Tank
+
+    def pulse_run(size, n, b, cx, cy):
+        t = Tank(size, size, n, [], decay_factor=1.0)
+        t.set_boundary_type(b)
+        t.u[:] = np.exp(-((t.X - cx) ** 2 + (t.Y - cy) ** 2) / (2 * 0.8 ** 2))
+        t.u_prev[:] = t.u
+        e0 = wave_energy(t)
+        sim = Simulation(t)
+        while sim.time < time:
+            sim.step(0.05)
+        return t, e0
+
+    small, e0 = pulse_run(20, res, boundary, px, py)
+    big, _ = pulse_run(60, 3 * (res - 1) + 1, "reflective", px + 20, py + 20)
+    win = slice(res - 1, 2 * (res - 1) + 1)
+    diff = Tank(20, 20, res, [])
+    diff.u, diff.u_prev = small.u - big.u[win, win], small.u_prev - big.u_prev[win, win]
+    return wave_energy(diff) / e0
+
+
+@pytest.mark.parametrize("pos", [(10, 10), (4, 4), (10, 4)])
+def test_absorbing_walls_reflect_less_than_open(pos):
+    """'Absorbing' must be clearly better than 'open' (Mur alone): its damping layer used to be too thin and abrupt
+    to beat Mur, so the two boundary types behaved alike."""
+    assert reflected_fraction("reflective", *pos) > 0.5
+    assert reflected_fraction("absorbing", *pos) < 0.6 * reflected_fraction("open", *pos)

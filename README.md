@@ -71,11 +71,11 @@ Key aspects of the simulation:
    Δt = 0.05·Δx/c, so a deeper tank takes more steps per frame.
 2. **Boundary Conditions**:
 - Reflective: u = 0 at boundaries
-- Absorbing: the Mur condition below plus a gentle 10-cell damping layer (quadratic profile) along the walls that
-  carry no slits, so slits and the waves they send in keep their full strength; a pulse sends back about 0.5 %
-  of its energy
-- Open: transparent walls with the first-order Mur (Engquist-Majda) absorbing boundary condition; a pulse
-  leaving the tank sends back well under 1 % of its energy
+- Absorbing: the Mur condition below plus a graded damping layer 6 units wide (quadratic profile, rate 2 per unit
+  time at the wall) along the walls that carry no slits, so slits and the waves they send in keep their full
+  strength; it reflects about 0.02 % of a pulse's energy, against about 0.1 % for open walls
+- Open: transparent walls with the first-order Mur (Engquist-Majda) absorbing boundary condition (about 0.1 % of a
+  pulse's energy is reflected)
 3. **Wave Sources**: slits are prescribed (hard) sources, like the dipper of a ripple tank: every step the cells of
    the opening are set to A·sin(2π(f t − d/λ)), where d is the distance from the wall into the tank (all slits on
    a wall are fed by the same plane wave, so they are in phase), with adjustable amplitude, frequency, wavelength

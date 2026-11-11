@@ -125,4 +125,40 @@ ok('absorbing walls keep the slit strength (transmitted peak >= 0.7 x open)', ()
   assert.ok(a > 0.7 * o, `absorbing ${a} vs open ${o}`);
 });
 
+// Energy reflected into the tank by its walls (tests/test_physics.py reflected_fraction): small tank minus the same
+// pulse in a 60 x 60 reflective tank with the same grid spacing.
+function waveEnergy(t, u, up) {
+  const N = t.resolution;
+  let e = 0;
+  for (let i = 1; i < N - 1; i++) for (let j = 1; j < N - 1; j++) {
+    const k = i * N + j, ut = (u[k] - up[k]) / t.dt;
+    const gx = (u[k + 1] - u[k - 1]) / (2 * t.dx), gy = (u[k + N] - u[k - N]) / (2 * t.dy);
+    e += ut ** 2 + t.c ** 2 * (gx ** 2 + gy ** 2);
+  }
+  return e;
+}
+function reflectedFraction(boundary, px, py, res = 100, time = 2.5) {
+  const pulse = (size, n, b, cx, cy) => {
+    const t = new Tank(size, size, n, [], { decayFactor: 1 });
+    t.setBoundaryType(b);
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) t.u[i * n + j] = Math.exp(-((t.x[j] - cx) ** 2 + (t.y[i] - cy) ** 2) / (2 * 0.8 ** 2));
+    t.uPrev.set(t.u);
+    const e0 = waveEnergy(t, t.u, t.uPrev), sim = new Simulation(t);
+    while (sim.time < time) sim.step();
+    return [t, e0];
+  };
+  const [s, e0] = pulse(20, res, boundary, px, py), B = 3 * (res - 1) + 1, [b] = pulse(60, B, 'reflective', px + 20, py + 20);
+  const du = new Float64Array(res * res), dp = new Float64Array(res * res);
+  for (let i = 0; i < res; i++) for (let j = 0; j < res; j++) {
+    const k = (i + res - 1) * B + (j + res - 1);
+    du[i * res + j] = s.u[i * res + j] - b.u[k]; dp[i * res + j] = s.uPrev[i * res + j] - b.uPrev[k];
+  }
+  return waveEnergy(s, du, dp) / e0;
+}
+ok('absorbing walls reflect clearly less than open walls (< 0.6 x, pulse at (10, 4))', () => {
+  const o = reflectedFraction('open', 10, 4), a = reflectedFraction('absorbing', 10, 4);
+  assert.ok(a < 0.6 * o, `absorbing ${a} vs open ${o}`);
+  console.log(`      reflected energy: open ${(100 * o).toFixed(3)} %, absorbing ${(100 * a).toFixed(3)} %`);
+});
+
 console.log(`wave_engine: ${n} checks passed (${F.cases.length} Python reference cases at ${F.resolution} x ${F.resolution})`);

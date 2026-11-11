@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 SIDES = ("left", "right", "bottom", "top")
-SPONGE_CELLS = 10        # width of the absorbing layer ("absorbing" boundaries)
-SPONGE_STRENGTH = 0.005   # damping per step at the wall (quadratic profile, zero at the inner edge)
+SPONGE_WIDTH = 6.0       # width of the absorbing layer in tank units ("absorbing" boundaries)
+SPONGE_RATE = 2.0        # damping rate (per unit time) at the wall; quadratic profile, zero at the inner edge
 COLOUR_PERCENTILE = 95    # Tank.colour_range: percentile of |u| that sets the plot's colour limit
 
 class Slit:
@@ -198,10 +198,10 @@ class Tank:
         return walls
 
     def apply_sponge(self, sides):
-        """Damp u and u_prev in a SPONGE_CELLS-wide layer along the given walls, smoothly (quadratic profile, strongest
-        at the wall) so the layer itself does not reflect."""
-        n = SPONGE_CELLS
-        factor = 1 - SPONGE_STRENGTH * ((n - np.arange(n)) / n) ** 2  # index 0 = at the wall
+        """Damp u and u_prev in a SPONGE_WIDTH-wide layer along the given walls, smoothly (quadratic profile, strongest
+        at the wall, rate SPONGE_RATE per unit time) so the layer absorbs without reflecting."""
+        n = min(max(1, int(round(SPONGE_WIDTH / self.dx))), self.resolution // 2)
+        factor = 1 - SPONGE_RATE * self.dt * ((n - np.arange(n)) / n) ** 2  # index 0 = at the wall
         for arr in (self.u, self.u_prev):
             if "bottom" in sides:
                 arr[:n, :] *= factor[:, np.newaxis]
