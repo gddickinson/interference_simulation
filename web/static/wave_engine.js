@@ -6,8 +6,10 @@
 export const FRAME_DT = 0.05;          // the desktop timer calls simulation.step(0.05) every 50 ms
 export const TANK = { width: 20, height: 20, resolution: 200 };
 export const SLIT_DEFAULTS = { width: 0.5, amplitude: 10, frequency: 1, wavelength: 2 };
-export const SIDES = ['bottom', 'top', 'left', 'right'];
+export const SETUP_SIDES = ['bottom', 'top', 'left', 'right'];   // sim_setup.SIDES
 export const BOUNDARIES = ['reflective', 'absorbing', 'open'];
+export const SIDES = ['left', 'right', 'bottom', 'top'];   // wall names (simulation.SIDES)
+export const SPONGE_CELLS = 10, SPONGE_STRENGTH = 0.005;    // simulation.py absorbing layer
 
 // numpy.linspace(start, stop, num) (endpoint included, last value set to stop)
 export function linspace(start, stop, num) {
@@ -89,7 +91,12 @@ export class Tank {
     }
     uPrev.set(u);
     for (let i = 1; i < n - 1; i++) for (let j = 1; j < n - 1; j++) u[i * n + j] = uNext[i * n + j];
-    if (this.boundaryType === 'open') this.applyMur(['left', 'right', 'bottom', 'top']);
+    if (this.boundaryType === 'open') this.applyMur(SIDES);
+    else if (this.boundaryType === 'absorbing') {   // sponge on walls without slits, Mur on every wall
+      const walls = this.slitWalls();
+      this.applySponge(SIDES.filter(s => !walls.has(s)));
+      this.applyMur(SIDES);
+    }
 
     const TWO_PI = 2 * Math.PI;
     for (const s of this.slits) {
@@ -125,18 +132,28 @@ export class Tank {
       u[yi * n + xi] = p.amplitude * Math.sin(TWO_PI * p.frequency * time);
     }
     this.time = time;   // the standing wave is superposed in field(), not accumulated into u
+  }
 
-    if (this.boundaryType === 'absorbing') {
-      const ew = 10, ef = linspace(0, 1, ew);
-      for (let a = 0; a < ew; a++) {
-        const top = (n - ew + a) * n;
-        for (let j = 0; j < n; j++) u[a * n + j] *= ef[a];
-        for (let j = 0; j < n; j++) u[top + j] *= ef[ew - 1 - a];
-      }
-      for (let i = 0; i < n; i++) for (let a = 0; a < ew; a++) {
-        u[i * n + a] *= ef[a];
-        u[i * n + n - ew + a] *= ef[ew - 1 - a];
-      }
+  // Tank.slit_walls: walls carrying at least one slit.
+  slitWalls() {
+    const walls = new Set(), n = this.resolution;
+    for (const s of this.slits) {
+      const xi = Math.trunc(s.position[0] / this.dx), yi = Math.trunc(s.position[1] / this.dy);
+      if (xi === 0) walls.add('left'); else if (xi === n - 1) walls.add('right');
+      else if (yi === 0) walls.add('bottom'); else if (yi === n - 1) walls.add('top');
+    }
+    return walls;
+  }
+
+  // Tank.apply_sponge: quadratic damping layer of SPONGE_CELLS along the given walls (u and uPrev).
+  applySponge(sides) {
+    const n = this.resolution, w = SPONGE_CELLS, f = [];
+    for (let k = 0; k < w; k++) f.push(1 - SPONGE_STRENGTH * ((w - k) / w) ** 2);
+    for (const a of [this.u, this.uPrev]) {
+      if (sides.includes('bottom')) for (let k = 0; k < w; k++) for (let j = 0; j < n; j++) a[k * n + j] *= f[k];
+      if (sides.includes('top')) for (let k = 0; k < w; k++) for (let j = 0; j < n; j++) a[(n - 1 - k) * n + j] *= f[k];
+      if (sides.includes('left')) for (let i = 0; i < n; i++) for (let k = 0; k < w; k++) a[i * n + k] *= f[k];
+      if (sides.includes('right')) for (let i = 0; i < n; i++) for (let k = 0; k < w; k++) a[i * n + n - 1 - k] *= f[k];
     }
   }
 

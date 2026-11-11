@@ -63,3 +63,12 @@ The FDTD stencil never updated the outer ring, so "open" walls reflected like fi
 Mur (Engquist–Majda) absorbing condition (`Tank.apply_mur`). A Gaussian pulse in an empty tank keeps 0.04 % of its
 energy after t = 3 with open walls (99.6 % with reflective; was 99.6 % with open too). Tests:
 `test_open_walls_do_not_reflect` + node check.
+
+### Fix 4: absorbing walls keep slit strength (and absorb)
+The absorbing layer multiplied the ten outer cells by 0..1 every step *after* the sources were added, so wall slits
+were almost silent (transmitted peak 3e-16 vs 0.20 with open walls), and its abrupt profile reflected ~100 % of a
+pulse. Now: a gentle quadratic damping layer (`SPONGE_STRENGTH` 0.005, 10 cells) on walls *without* slits, applied
+before the sources are set, plus the Mur condition on every wall. Transmitted peak 0.197 (= open); pulse energy left
+0.5 %. Tests: `test_absorbing_walls_keep_slit_strength`, `test_absorbing_walls_absorb` + node checks.
+For George: a sponge of any strength reflects more than Mur alone here (0.5 % vs 0.04 %), so "absorbing" and
+"open" now behave almost alike; one of them could be dropped or the sponge widened.

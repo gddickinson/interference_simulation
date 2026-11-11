@@ -1,6 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+SIDES = ("left", "right", "bottom", "top")
+SPONGE_CELLS = 10        # width of the absorbing layer ("absorbing" boundaries)
+SPONGE_STRENGTH = 0.005   # damping per step at the wall (quadratic profile, zero at the inner edge)
+
 class Slit:
     def __init__(self, position, width, amplitude, frequency, wavelength):
         self.position = position
@@ -108,7 +112,12 @@ class Tank:
         self.u_prev = self.u.copy()
         self.u[1:-1, 1:-1] = u_next
         if self.boundary_type == "open":
-            self.apply_mur(("left", "right", "bottom", "top"))
+            self.apply_mur(SIDES)
+        elif self.boundary_type == "absorbing":
+            # Graded sponge layer on the walls without slits (so it never damps a slit or the wave it sends into the
+            # tank), plus the Mur condition on every wall. Applied before the sources are set.
+            self.apply_sponge([side for side in SIDES if side not in self.slit_walls()])
+            self.apply_mur(SIDES)
 
         # Generate new waves at slits
         for slit in self.slits:
@@ -171,17 +180,36 @@ class Tank:
         # The standing wave is superposed on the displayed field (see field()), not accumulated into u
         self.time = time
 
-        # Handle boundary conditions ("open" walls were handled by apply_mur above)
-        if self.boundary_type == "absorbing":
-            # Gradual absorption at edges
-            edge_width = 10
-            edge_factor = np.linspace(0, 1, edge_width)[:, np.newaxis]
 
-            self.u[:edge_width, :] *= edge_factor
-            self.u[-edge_width:, :] *= edge_factor[::-1]
-            self.u[:, :edge_width] *= edge_factor.T
-            self.u[:, -edge_width:] *= edge_factor[::-1].T
+    def slit_walls(self):
+        """The walls ('left', 'right', 'bottom', 'top') that carry at least one slit."""
+        walls = set()
+        for slit in self.slits:
+            x_idx, y_idx = int(slit.position[0] / self.dx), int(slit.position[1] / self.dy)
+            if x_idx == 0:
+                walls.add("left")
+            elif x_idx == self.resolution - 1:
+                walls.add("right")
+            elif y_idx == 0:
+                walls.add("bottom")
+            elif y_idx == self.resolution - 1:
+                walls.add("top")
+        return walls
 
+    def apply_sponge(self, sides):
+        """Damp u and u_prev in a SPONGE_CELLS-wide layer along the given walls, smoothly (quadratic profile, strongest
+        at the wall) so the layer itself does not reflect."""
+        n = SPONGE_CELLS
+        factor = 1 - SPONGE_STRENGTH * ((n - np.arange(n)) / n) ** 2  # index 0 = at the wall
+        for arr in (self.u, self.u_prev):
+            if "bottom" in sides:
+                arr[:n, :] *= factor[:, np.newaxis]
+            if "top" in sides:
+                arr[-n:, :] *= factor[::-1, np.newaxis]
+            if "left" in sides:
+                arr[:, :n] *= factor[np.newaxis, :]
+            if "right" in sides:
+                arr[:, -n:] *= factor[np.newaxis, ::-1]
 
     def apply_mur(self, sides):
         """First-order Mur (Engquist-Majda) absorbing condition on the given walls: the wall cells take the value

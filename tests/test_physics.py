@@ -96,3 +96,28 @@ def test_open_walls_do_not_reflect():
     """'Open' walls must let waves leave: under 3 % of a pulse's energy may come back (they used to reflect fully)."""
     assert pulse_energy_left("reflective") > 0.5
     assert pulse_energy_left("open") < 0.03
+
+
+def transmitted_peak(boundary, frames=80, start=40):
+    """Peak |u| at (10, 6), 6 units in front of a single bottom slit, over frames start..frames."""
+    sim = create_simulation({'bottom': 1}, resolution=100)
+    t = sim.tank
+    t.set_boundary_type(boundary)
+    i, j = int(6 / t.dy), int(10 / t.dx)
+    peak = 0.0
+    for f in range(frames):
+        sim.step(0.05)
+        if f >= start:
+            peak = max(peak, abs(t.u[i, j]))
+    return peak
+
+
+def test_absorbing_walls_keep_slit_strength():
+    """The absorbing layer used to damp the slit cells themselves (they sit on the walls), so slits were nearly silent
+    with absorbing boundaries. The wave transmitted into the tank must be as strong as with open walls."""
+    assert transmitted_peak("absorbing") > 0.7 * transmitted_peak("open")
+
+
+def test_absorbing_walls_absorb():
+    """Absorbing walls must not send a pulse back (the abrupt damping layer reflected almost all of it)."""
+    assert pulse_energy_left("absorbing") < 0.03

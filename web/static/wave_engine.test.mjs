@@ -102,11 +102,26 @@ export function pulseEnergyLeft(boundary, time = 3) {
   while (sim.time < time) sim.step();
   return energy() / e0;
 }
-ok('open walls let a pulse leave (< 3 % of its energy left; reflective keeps > 50 %)', () => {
+ok('open and absorbing walls let a pulse leave (< 3 % of its energy left; reflective keeps > 50 %)', () => {
   assert.ok(pulseEnergyLeft('reflective') > 0.5);
-  const left = pulseEnergyLeft('open');
-  assert.ok(left < 0.03, `open: ${left}`);
-  console.log(`      open walls: ${(100 * left).toFixed(3)} % of the pulse energy left`);
+  for (const b of ['open', 'absorbing']) {
+    const left = pulseEnergyLeft(b);
+    assert.ok(left < 0.03, `${b}: ${left}`);
+    console.log(`      ${b} walls: ${(100 * left).toFixed(3)} % of the pulse energy left`);
+  }
+});
+
+ok('absorbing walls keep the slit strength (transmitted peak >= 0.7 x open)', () => {
+  const peak = boundary => {
+    const sim = createSimulation({ bottom: 1 }, { resolution: 100 }), t = sim.tank;
+    t.setBoundaryType(boundary);
+    const k = Math.trunc(6 / t.dy) * t.resolution + Math.trunc(10 / t.dx);
+    let p = 0;
+    for (let f = 0; f < 80; f++) { sim.step(); if (f >= 40) p = Math.max(p, Math.abs(t.u[k])); }
+    return p;
+  };
+  const a = peak('absorbing'), o = peak('open');
+  assert.ok(a > 0.7 * o, `absorbing ${a} vs open ${o}`);
 });
 
 console.log(`wave_engine: ${n} checks passed (${F.cases.length} Python reference cases at ${F.resolution} x ${F.resolution})`);
