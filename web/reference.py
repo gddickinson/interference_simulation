@@ -88,6 +88,7 @@ def fixture():
                       'distance_sum': float(t.distance_map.sum()), 'distance_row7': t.distance_map[7].tolist(),
                       'boundary_zeros': int((t.boundary == 0).sum()), 'u': t.u.ravel().tolist(),
                       'field_sum': float(t.field().sum()), 'colour_range': t.colour_range(),
+                      'source_amplitude': t.source_amplitude(),
                       'u_prev_sum': float(t.u_prev.sum())})
     return {'resolution': FIXTURE_RES, 'x': np.linspace(0, 20, FIXTURE_RES).tolist(), 'cases': cases,
             'seismic': seismic_lut()}

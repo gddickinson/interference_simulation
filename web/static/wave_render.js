@@ -1,5 +1,5 @@
 // Canvas rendering of the wave field the way Tank.plot draws it: matplotlib's 'seismic' colour map, vmin/vmax at
-// -/+ the largest source amplitude (Tank.colour_range) or a chosen range, origin at the bottom left, slits as dots and obstacles as circle outlines.
+// -/+ Tank.colour_range (95th percentile of |u|) or a chosen range, origin at the bottom left, slits as dots and obstacles as circle outlines.
 
 // matplotlib _seismic_data, evenly spaced, expanded to 256 entries exactly as LinearSegmentedColormap.from_list does.
 const ANCHORS = [[0, 0, 0.3], [0, 0, 1], [1, 1, 1], [1, 0, 0], [0.5, 0, 0]];
@@ -24,14 +24,6 @@ export function lutIndex(v, vmin, vmax) {
   let xa = ((v - vmin) / (vmax - vmin)) * 256;
   if (xa === 256) xa = 255;
   return xa < 0 ? 0 : xa >= 256 ? 255 : Math.trunc(xa);
-}
-
-// 99th percentile of |u| over a strided sample (for the "auto" colour range).
-export function robustMax(u) {
-  const step = Math.max(1, Math.floor(u.length / 4000)), s = [];
-  for (let k = 0; k < u.length; k += step) s.push(Math.abs(u[k]));
-  s.sort((a, b) => a - b);
-  return Math.max(1e-9, s[Math.floor(0.99 * (s.length - 1))]);
 }
 
 const off = typeof document !== 'undefined' ? document.createElement('canvas') : null;

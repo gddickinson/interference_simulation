@@ -80,7 +80,8 @@ Key aspects of the simulation:
    the opening are set to A·sin(2π(f t − d/λ)), where d is the distance from the wall into the tank (all slits on
    a wall are fed by the same plane wave, so they are in phase), with adjustable amplitude, frequency, wavelength
    and width. The
-   field therefore stays of the order of A, and the plot's colour range is ± the largest source amplitude.
+   field therefore stays of the order of A. The radiated waves are much weaker than the source cells, so the plot's
+   colour range follows the field: ± the 95th percentile of |u| each frame (the source cells saturate).
 4. **Obstacles**: Implemented as regions where u = 0.
 5. **Wave Packets**: a sinusoid travelling along a direction, prescribed on the packet's centre line and blended
    into the field with a Gaussian weight. Interference points hold one grid point at A·sin(2π f t).

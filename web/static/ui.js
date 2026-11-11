@@ -1,6 +1,6 @@
 // Shared page helpers: control specs and example set-ups from the API, colour-range handling and the colour legend.
 import { api } from './core.js';
-import { SEISMIC_LUT, drawField, robustMax } from './wave_render.js';
+import { SEISMIC_LUT, drawField } from './wave_render.js';
 
 let setupPromise = null;
 // { controls, setups } from /api/controls and /api/setups (sim_setup.py and web/reference.py on the server).
@@ -9,8 +9,9 @@ export function loadSetup() {
   return setupPromise;
 }
 
-// Colour range: 'desktop' is Tank.plot's +- largest source amplitude; 'auto' scales to the 99th percentile of |u|.
-export function colourRange(tank, mode) { return mode === 'auto' ? robustMax(tank.field()) : tank.colourRange(); }
+// Colour range: 'desktop' is Tank.colour_range (95th percentile of |u|, as the desktop plot); 'source' is +- the
+// largest source amplitude (shows the bounded source cells, the radiated waves look faint).
+export function colourRange(tank, mode) { return mode === 'source' ? tank.sourceAmplitude() : tank.colourRange(); }
 
 export function draw(canvas, sim, mode = 'desktop', marks = true) {
   const range = colourRange(sim.tank, mode);

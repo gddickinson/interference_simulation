@@ -30,8 +30,8 @@ export function renderPanel(host, { controls: C, setups }, state, sim, cb) {
     <h3>Slit controls</h3><div id="slits">${sim.tank.slits.length ? '' : '<p class="small mute">No slits in this tank.</p>'}</div>
     <h3>View (web only)</h3>
     <label for="col">Colour range</label>
-    <select id="col"><option value="desktop" ${state.colour === 'desktop' ? 'selected' : ''}>± largest source amplitude (as the desktop plot)</option>
-      <option value="auto" ${state.colour === 'auto' ? 'selected' : ''}>auto (99th percentile of |u|)</option></select>
+    <select id="col"><option value="desktop" ${state.colour === 'desktop' ? 'selected' : ''}>95th percentile of |u| (as the desktop plot)</option>
+      <option value="source" ${state.colour === 'source' ? 'selected' : ''}>± largest source amplitude</option></select>
     <label for="click">Clicking the tank adds</label>
     <select id="click">${list([['none', 'nothing'], ['obstacle', 'an obstacle'], ['point', 'an interference point'], ['packet', 'a wave packet']],
       ([v, t]) => `<option value="${v}" ${state.click === v ? 'selected' : ''}>${t}</option>`)}</select>

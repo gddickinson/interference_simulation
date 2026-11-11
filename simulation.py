@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 SIDES = ("left", "right", "bottom", "top")
 SPONGE_CELLS = 10        # width of the absorbing layer ("absorbing" boundaries)
 SPONGE_STRENGTH = 0.005   # damping per step at the wall (quadratic profile, zero at the inner edge)
+COLOUR_PERCENTILE = 95    # Tank.colour_range: percentile of |u| that sets the plot's colour limit
 
 class Slit:
     def __init__(self, position, width, amplitude, frequency, wavelength):
@@ -241,13 +242,19 @@ class Tank:
             return self.u
         return self.u + self.standing_wave()
 
-    def colour_range(self):
-        """Symmetric colour limit for plotting: the largest source amplitude (1 if there are no sources)."""
+    def source_amplitude(self):
+        """The largest source amplitude (1 if there are no sources); the field stays of this order."""
         amps = [s.amplitude for s in self.slits] + [p['amplitude'] for p in self.wave_packets]
         amps += [p['amplitude'] for p in self.interference_points]
         if self.standing_wave_mode is not None:
             amps.append(0.5)
         return max(amps) if amps and max(amps) > 0 else 1
+
+    def colour_range(self, percentile=COLOUR_PERCENTILE):
+        """Symmetric colour limit for plotting: a high percentile of |field| (the prescribed source cells are much
+        stronger than the waves they radiate, so a +-amplitude range would show only the sources), but at least 1 %
+        of the largest source amplitude so an almost empty tank is not shown as noise."""
+        return float(max(np.percentile(np.abs(self.field()), percentile), 0.01 * self.source_amplitude()))
 
     def add_obstacle(self, obstacle):
         self.obstacles.append(obstacle)
@@ -298,7 +305,7 @@ class Tank:
         self.time = 0.0
 
     def plot(self, ax):
-        vmax = self.colour_range()  # +- the largest source amplitude
+        vmax = self.colour_range()  # +- 95th percentile of |u| (see colour_range)
         vmin = -vmax
         im = ax.imshow(self.field(), cmap='seismic', animated=True,
                        extent=[0, self.width, 0, self.height],

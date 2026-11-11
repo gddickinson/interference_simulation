@@ -10,6 +10,15 @@ export const SETUP_SIDES = ['bottom', 'top', 'left', 'right'];   // sim_setup.SI
 export const BOUNDARIES = ['reflective', 'absorbing', 'open'];
 export const SIDES = ['left', 'right', 'bottom', 'top'];   // wall names (simulation.SIDES)
 export const SPONGE_CELLS = 10, SPONGE_STRENGTH = 0.005;    // simulation.py absorbing layer
+export const COLOUR_PERCENTILE = 95;                        // simulation.COLOUR_PERCENTILE
+
+// numpy.percentile(np.abs(values), p) with the default 'linear' method (same lerp form as numpy, for parity).
+export function percentileAbs(values, p) {
+  const a = Float64Array.from(values, Math.abs).sort(), n = a.length;
+  const idx = (n - 1) * (p / 100), lo = Math.floor(idx), hi = Math.min(lo + 1, n - 1), t = idx - lo;
+  const d = a[hi] - a[lo];
+  return t >= 0.5 ? a[hi] - d * (1 - t) : a[lo] + d * t;
+}
 
 // numpy.linspace(start, stop, num) (endpoint included, last value set to stop)
 export function linspace(start, stop, num) {
@@ -183,8 +192,12 @@ export class Tank {
     }
     return out;
   }
-  // Tank.colour_range: the largest source amplitude (1 if there are no sources).
-  colourRange() {
+  // Tank.colour_range: 95th percentile of |field|, at least 1 % of the largest source amplitude.
+  colourRange(percentile = COLOUR_PERCENTILE) {
+    return Math.max(percentileAbs(this.field(), percentile), 0.01 * this.sourceAmplitude());
+  }
+  // Tank.source_amplitude: the largest source amplitude (1 if there are no sources).
+  sourceAmplitude() {
     const a = [...this.slits, ...this.wavePackets, ...this.interferencePoints].map(s => s.amplitude);
     if (this.standingWaveMode !== null) a.push(0.5);
     const m = a.length ? Math.max(...a) : 0;

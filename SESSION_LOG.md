@@ -72,3 +72,10 @@ before the sources are set, plus the Mur condition on every wall. Transmitted pe
 0.5 %. Tests: `test_absorbing_walls_keep_slit_strength`, `test_absorbing_walls_absorb` + node checks.
 For George: a sponge of any strength reflects more than Mur alone here (0.5 % vs 0.04 %), so "absorbing" and
 "open" now behave almost alike; one of them could be dropped or the sponge widened.
+
+### Fix 5: colour range makes the wave pattern visible
+With bounded sources, a ± source-amplitude colour range (Fix 1) left only ~2 % of the tank visibly coloured: the
+prescribed source cells (±10) are ~50× stronger than the waves they radiate. `Tank.colour_range()` is now the 95th
+percentile of |field| (at least 1 % of `Tank.source_amplitude()`), used by `Tank.plot`, the GUI and the web
+(numpy-identical percentile in JS); >50 % of the tank uses at least 10 % of the scale. The web keeps a
+"± largest source amplitude" option. Test: `test_colour_range_shows_the_wave_pattern`.

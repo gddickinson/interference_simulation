@@ -43,7 +43,7 @@ route('home', async () => {
 const CYCLE = 50;
 function hero(setup) {
   const canvas = document.getElementById('hero'), sim = buildSetup(setup, 120);
-  document.getElementById('herocap').textContent = `${setup.name}, 120 × 120 grid, restarting every ${CYCLE * 0.05} s of animation; colours ± the source amplitude (blue negative, red positive) as in the desktop plot`;
+  document.getElementById('herocap').textContent = `${setup.name}, 120 × 120 grid, restarting every ${CYCLE * 0.05} s of animation; colour range ± the 95th percentile of |u| (blue negative, red positive) as in the desktop plot`;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     for (let i = 0; i < 40; i++) sim.step(FRAME_DT);
     draw(canvas, sim); return;

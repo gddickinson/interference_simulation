@@ -233,7 +233,7 @@ class SimulationGUI(QMainWindow):
         self.simulation.step(0.05)
         tank = self.simulation.tank
         self.im.set_array(tank.field())
-        vmax = tank.colour_range()  # +- the largest source amplitude
+        vmax = tank.colour_range()  # +- 95th percentile of |u|, so the radiated waves stay visible
         self.im.set_clim(vmin=-vmax, vmax=vmax)
         self.canvas.draw()
 

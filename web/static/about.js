@@ -25,8 +25,9 @@ route('about', async () => {
   <p class="eq">u(t+Δt) = 2u(t) − u(t−Δt) + c²Δt² ∇²u</p>
   <p>on a ${C.tank[0]} × ${C.tank[1]} tank with ${C.resolution} × ${C.resolution} grid points in the desktop app.
   Each frame of the desktop animation (a 50 ms timer) advances the simulation by ${C.frame_dt} time units, split into
-  as many FDTD steps as fit. The colour map is matplotlib's <i>seismic</i>, from minus to plus the largest source amplitude (blue negative, red
-  positive).</p>
+  as many FDTD steps as fit. The colour map is matplotlib's <i>seismic</i> (blue negative, red positive), scaled each frame to ± the 95th
+  percentile of |u|: the prescribed source cells are much stronger than the waves they radiate, so a scale set by
+  the source amplitude would show little more than the slits.</p>
   <ul>
     <li><b>Slits</b> sit on the tank walls, spaced evenly along each side. They are prescribed (hard) sources, as
       the dipper of a ripple tank: every step the cells of the opening (three cells deep) are set to
@@ -44,8 +45,9 @@ route('about', async () => {
   </ul>
   <div class="callout"><b>Things worth knowing when you read the picture.</b>
     <ul>
-      <li>Because sources are prescribed, |u| stays of the order of the source amplitude. The "auto" colour range
-        on the Tank page rescales to the field actually present (useful for weak far-field waves).</li>
+      <li>Because sources are prescribed, |u| stays of the order of the source amplitude. The colour scale follows
+        the field (95th percentile of |u|), so the cells right at the sources are saturated; choose "± largest
+        source amplitude" on the Tank page to see them unsaturated.</li>
       <li>Reset clears the waves, packets, interference points and standing mode; obstacles stay.</li>
     </ul></div>
 

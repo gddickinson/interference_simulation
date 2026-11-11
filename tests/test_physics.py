@@ -42,12 +42,12 @@ def test_points_packets_and_standing_wave_stay_bounded():
     assert run_frames(sim, 300) < 5 * 1.5 + 0.5
 
 
-def test_colour_range_follows_source_amplitude():
+def test_source_amplitude_is_the_largest_source():
     sim = create_simulation({'bottom': 2}, resolution=40)
-    assert sim.tank.colour_range() == 10
+    assert sim.tank.source_amplitude() == 10
     sim.tank.slits[0].amplitude = 14
-    assert sim.tank.colour_range() == 14
-    assert create_simulation({}, resolution=40).tank.colour_range() == 1
+    assert sim.tank.source_amplitude() == 14
+    assert create_simulation({}, resolution=40).tank.source_amplitude() == 1
 
 
 @pytest.mark.parametrize("config", [{'bottom': 2}, {'bottom': 3}, {'left': 2}, {'top': 4}])
@@ -121,3 +121,16 @@ def test_absorbing_walls_keep_slit_strength():
 def test_absorbing_walls_absorb():
     """Absorbing walls must not send a pulse back (the abrupt damping layer reflected almost all of it)."""
     assert pulse_energy_left("absorbing") < 0.03
+
+
+def test_colour_range_shows_the_wave_pattern():
+    """The radiated waves are much weaker than the prescribed source cells; a colour range of +-A (the largest source
+    amplitude) showed only the slits. The range must make the pattern visible: a good part of the tank should use
+    at least 10 % of the colour scale."""
+    sim = create_simulation({'bottom': 2}, resolution=100)
+    for _ in range(40):
+        sim.step(0.05)
+    t = sim.tank
+    vmax = t.colour_range()
+    assert vmax < 0.5 * t.source_amplitude()
+    assert (np.abs(t.field()) > 0.1 * vmax).mean() > 0.3

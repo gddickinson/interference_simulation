@@ -30,7 +30,7 @@ route('check', async () => {
     const js = sim.tank.field();
     py.forEach((v, k) => { worst = Math.max(worst, Math.abs(v - js[k])); });
     const rel = worst / Math.max(1, ref.max_abs);
-    const range = sim.tank.colourRange();
+    const range = sim.tank.colourRange();   // same scale for both, from the browser field
     drawField(document.getElementById('py-' + s.slug).getContext('2d'), sim.tank, { range, values: py });
     drawField(document.getElementById('js-' + s.slug).getContext('2d'), sim.tank, { range });
     const el = document.getElementById('res-' + s.slug);
