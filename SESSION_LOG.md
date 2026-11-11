@@ -51,3 +51,9 @@ mode is superposed on the displayed field (`Tank.field()`), not accumulated. Max
 (10 for default slits; was 10^3–10^4). Plot colour range is ± the largest source amplitude (`Tank.colour_range()`,
 used by `Tank.plot` and the GUI); the web keeps an "auto" option. Tests: `tests/test_physics.py` (bounded over 300
 frames for all boundaries, points/packets/standing, colour range) and a node check.
+
+### Fix 2: slits on one wall are in phase
+The slit phase used the absolute x coordinate, so the two default bottom slits differed by 2π·Δx/λ and the phase
+varied along bottom/top openings. The phase now uses the distance from the wall along the incoming plane wave's
+direction (into the tank), so all slits on a wall are in phase. The unused `Slit.direction` (hard-coded tank size
+20) was removed. Tests: `test_slits_on_one_wall_are_in_phase` + node check.

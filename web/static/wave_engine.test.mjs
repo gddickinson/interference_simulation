@@ -71,4 +71,14 @@ ok('prescribed sources stay bounded: 300 frames, every boundary, max |u| < 5 A',
   }
 });
 
+ok('slits on one wall oscillate in phase', () => {
+  for (const cfg of [{ bottom: 2 }, { bottom: 3 }, { top: 4 }, { right: 2 }]) {
+    const sim = createSimulation(cfg, { resolution: 60 }), t = sim.tank, N = t.resolution;
+    sim.step();
+    const v = t.slits.map(({ position: [x, y] }) =>
+      t.u[Math.min(Math.trunc(y / t.dy), N - 1) * N + Math.min(Math.trunc(x / t.dx), N - 1)]);
+    v.forEach(a => assert.ok(Math.abs(a - v[0]) < 1e-12, JSON.stringify(cfg) + ' ' + v));
+  }
+});
+
 console.log(`wave_engine: ${n} checks passed (${F.cases.length} Python reference cases at ${F.resolution} x ${F.resolution})`);

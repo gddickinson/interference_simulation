@@ -6,7 +6,7 @@ const HELP = {
   time_scale: 'Multiplies the time the sources see each step (time += dt × scale). Wave propagation per step is unchanged, so this changes how fast the sources oscillate relative to the waves.',
   depth: 'Water depth h; wave speed c = 10 √h. The FDTD step dt = 0.05 · dx / c shrinks as c grows, so a deeper tank takes more steps per frame and waves cross it faster on screen.',
   decay_factor: 'Damping per step, strongest far from the slits: u is multiplied by 1 − (1 − factor) × (distance to nearest slit / largest such distance).',
-  amplitude: 'Amplitude of the slit source.', wavelength: 'λ in the source term sin(2π(f t − x/λ)).',
+  amplitude: 'Amplitude of the slit source.', wavelength: 'λ in the source term sin(2π(f t − d/λ)).',
   frequency: 'f in the source term.', width: 'Width of the slit opening (rounded down to whole grid cells, at least one).',
 };
 
@@ -30,7 +30,8 @@ route('about', async () => {
   <ul>
     <li><b>Slits</b> sit on the tank walls, spaced evenly along each side. They are prescribed (hard) sources, as
       the dipper of a ripple tank: every step the cells of the opening (three cells deep) are set to
-      A·sin(2π(f t − x/λ)).</li>
+      A·sin(2π(f t − d/λ)), where d is the distance from the wall into the tank: every slit on a wall is fed by the
+      same plane wave, so slits on one wall are in phase.</li>
     <li><b>Obstacles</b> are discs where u is held at 0.</li>
     <li><b>Wave packets</b> drive a sinusoid travelling along a direction around a point, blended into the field
       with a Gaussian weight (fully prescribed on the centre line, untouched far from it).</li>

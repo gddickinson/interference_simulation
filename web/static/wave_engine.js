@@ -95,14 +95,15 @@ export class Tank {
       const [sx, sy] = s.position;
       const xi = Math.trunc(sx / this.dx), yi = Math.trunc(sy / this.dy);
       const sw = Math.max(1, Math.trunc(s.width / this.dx)), h = Math.floor(sw / 2);
-      let r0, r1, c0, c1;
-      if (xi === 0) { c0 = 0; c1 = 3; r0 = Math.max(0, yi - h); r1 = Math.min(n, yi + h + 1); }
-      else if (xi === n - 1) { c0 = n - 3; c1 = n; r0 = Math.max(0, yi - h); r1 = Math.min(n, yi + h + 1); }
-      else if (yi === 0) { c0 = Math.max(0, xi - h); c1 = Math.min(n, xi + h + 1); r0 = 0; r1 = 3; }
-      else if (yi === n - 1) { c0 = Math.max(0, xi - h); c1 = Math.min(n, xi + h + 1); r0 = n - 3; r1 = n; }
+      // depth(i, j): distance into the tank along the incoming plane wave's direction (same phase along a wall)
+      let r0, r1, c0, c1, depth;
+      if (xi === 0) { c0 = 0; c1 = 3; r0 = Math.max(0, yi - h); r1 = Math.min(n, yi + h + 1); depth = (i, j) => x[j]; }
+      else if (xi === n - 1) { c0 = n - 3; c1 = n; r0 = Math.max(0, yi - h); r1 = Math.min(n, yi + h + 1); depth = (i, j) => this.width - x[j]; }
+      else if (yi === 0) { c0 = Math.max(0, xi - h); c1 = Math.min(n, xi + h + 1); r0 = 0; r1 = 3; depth = i => y[i]; }
+      else if (yi === n - 1) { c0 = Math.max(0, xi - h); c1 = Math.min(n, xi + h + 1); r0 = n - 3; r1 = n; depth = i => this.height - y[i]; }
       else continue;
       for (let i = r0; i < r1; i++) for (let j = c0; j < c1; j++)   // prescribed (hard) source
-        u[i * n + j] = s.amplitude * Math.sin(TWO_PI * (s.frequency * time - x[j] / s.wavelength));
+        u[i * n + j] = s.amplitude * Math.sin(TWO_PI * (s.frequency * time - depth(i, j) / s.wavelength));
     }
 
     for (const p of this.wavePackets) {

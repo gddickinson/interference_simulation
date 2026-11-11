@@ -8,18 +8,7 @@ class Slit:
         self.amplitude = amplitude
         self.frequency = frequency
         self.wavelength = wavelength
-        # Determine direction based on position
-        x, y = position
-        if x == 0:  # Left side
-            self.direction = (1, 0)
-        elif x == 20:  # Right side
-            self.direction = (-1, 0)
-        elif y == 0:  # Bottom side
-            self.direction = (0, 1)
-        elif y == 20:  # Top side
-            self.direction = (0, -1)
-        else:
-            self.direction = (0, 1)  # Default to upward if not on an edge
+        # The incoming wave's direction is fixed by the wall the slit sits on (see Tank.update)
 
 class Obstacle:
     def __init__(self, position, radius):
@@ -128,20 +117,26 @@ class Tank:
             if x_idx == 0:  # Left side
                 x_range = slice(0, 3)
                 y_range = slice(max(0, y_idx - slit_width//2), min(self.resolution, y_idx + slit_width//2 + 1))
+                depth = self.X[y_range, x_range]  # distance into the tank along the wave's direction (+x)
             elif x_idx == self.resolution - 1:  # Right side
                 x_range = slice(self.resolution - 3, self.resolution)
                 y_range = slice(max(0, y_idx - slit_width//2), min(self.resolution, y_idx + slit_width//2 + 1))
+                depth = self.width - self.X[y_range, x_range]  # (-x)
             elif y_idx == 0:  # Bottom side
                 x_range = slice(max(0, x_idx - slit_width//2), min(self.resolution, x_idx + slit_width//2 + 1))
                 y_range = slice(0, 3)
+                depth = self.Y[y_range, x_range]  # (+y)
             elif y_idx == self.resolution - 1:  # Top side
                 x_range = slice(max(0, x_idx - slit_width//2), min(self.resolution, x_idx + slit_width//2 + 1))
                 y_range = slice(self.resolution - 3, self.resolution)
+                depth = self.height - self.Y[y_range, x_range]  # (-y)
             else:
                 continue  # Skip if slit is not on the edge
 
-            # Prescribed (hard) source: the slit cells oscillate with amplitude A, as in a ripple tank's dipper.
-            slit_wave = slit.amplitude * np.sin(2 * np.pi * (slit.frequency * time - self.X[y_range, x_range] / slit.wavelength))
+            # Prescribed (hard) source: the slit cells oscillate with amplitude A, as in a ripple tank's dipper. All
+            # slits on a wall are fed by the same plane wave travelling into the tank, so the phase depends only on
+            # the distance from the wall along that direction (slits on one wall are in phase).
+            slit_wave = slit.amplitude * np.sin(2 * np.pi * (slit.frequency * time - depth / slit.wavelength))
             self.u[y_range, x_range] = slit_wave
 
         # Generate wave packets

@@ -48,3 +48,21 @@ def test_colour_range_follows_source_amplitude():
     sim.tank.slits[0].amplitude = 14
     assert sim.tank.colour_range() == 14
     assert create_simulation({}, resolution=40).tank.colour_range() == 1
+
+
+@pytest.mark.parametrize("config", [{'bottom': 2}, {'bottom': 3}, {'left': 2}, {'top': 4}])
+def test_slits_on_one_wall_are_in_phase(config):
+    """Slits on the same wall are fed by the same plane wave, so they oscillate in phase. The phase used to be
+    taken from the absolute x coordinate, so slits at different x had different phases."""
+    sim = create_simulation(config, resolution=60)
+    t = sim.tank
+    for _ in range(3):
+        sim.step(0.05)
+        values = []
+        for slit in t.slits:
+            x, y = slit.position
+            i = min(int(y / t.dy), t.resolution - 1)
+            j = min(int(x / t.dx), t.resolution - 1)
+            values.append(t.u[i, j])
+        assert np.abs(t.u).max() > 0
+        assert np.allclose(values, values[0], atol=1e-12), values

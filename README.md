@@ -75,7 +75,9 @@ Key aspects of the simulation:
 - Open: no extra condition at the walls (the outermost grid cells are not updated by the FDTD step, so waves
   still reflect there; this is not a transparent boundary)
 3. **Wave Sources**: slits are prescribed (hard) sources, like the dipper of a ripple tank: every step the cells of
-   the opening are set to A·sin(2π(f t − x/λ)), with adjustable amplitude, frequency, wavelength and width. The
+   the opening are set to A·sin(2π(f t − d/λ)), where d is the distance from the wall into the tank (all slits on
+   a wall are fed by the same plane wave, so they are in phase), with adjustable amplitude, frequency, wavelength
+   and width. The
    field therefore stays of the order of A, and the plot's colour range is ± the largest source amplitude.
 4. **Obstacles**: Implemented as regions where u = 0.
 5. **Wave Packets**: a sinusoid travelling along a direction, prescribed on the packet's centre line and blended
