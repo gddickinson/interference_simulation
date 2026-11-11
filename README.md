@@ -17,7 +17,7 @@ This project is an interactive simulation of wave phenomena, focusing on interfe
 ## Installation
 
 1. Clone this repository:
-git clone https://github.com/yourusername/wave-interference-simulation.git
+git clone https://github.com/gddickinson/interference_simulation.git
 
 2. Install the required dependencies:
 pip install numpy matplotlib PyQt5
@@ -30,7 +30,8 @@ python main.py
 1. **Starting the Simulation**: Upon launching, you'll be prompted to enter the number of slits for each side of the tank. After setup, click the "Start" button to begin the simulation.
 
 2. **Adjusting Global Parameters**:
-- Use the "Time Scale" slider to speed up or slow down the simulation.
+- The "Time Scale" slider scales the clock that drives the sources (time += dt × scale), so sources oscillate
+  faster or slower relative to the waves; wave propagation per step is unchanged.
 - The "Depth" slider adjusts the simulated water depth, affecting wave speed.
 - "Wave Decay" controls how quickly waves dissipate over distance.
 
@@ -40,12 +41,13 @@ python main.py
 
 5. **Adding Elements**:
 - Click "Add Obstacle" to place a random circular obstacle in the tank.
-- "Add Wave Packet" creates a localized wave disturbance.
+- "Add Wave Packet" adds a Gaussian-enveloped wave source at a random position (it keeps driving the tank every step).
 - "Add Interference Point" places a point source of waves.
 
 6. **Standing Waves**: Select a standing wave mode from the dropdown to visualize different harmonic patterns.
 
-7. **Reset**: The "Reset" button clears all waves and returns the simulation to its initial state.
+7. **Reset**: The "Reset" button clears all waves, wave packets, interference points and the standing-wave mode;
+   obstacles stay in the tank.
 
 ## Mathematical Background
 
@@ -65,15 +67,20 @@ u(t+Δt) = 2u(t) - u(t-Δt) + c²Δt²(∂²u/∂x² + ∂²u/∂y²)
 
 Key aspects of the simulation:
 
-1. **Wave Speed**: c = √(gh), where g is gravity and h is water depth.
+1. **Wave Speed**: c = 10·√h, where h is the depth (a √(gh)-like shallow-water scaling). The time step is
+   Δt = 0.05·Δx/c, so a deeper tank takes more steps per frame.
 2. **Boundary Conditions**:
 - Reflective: u = 0 at boundaries
 - Absorbing: Gradual dampening near edges
-- Open: Waves pass through unaffected
-3. **Wave Sources**: Sinusoidal oscillations with adjustable amplitude, frequency, and wavelength.
+- Open: no extra condition at the walls (the outermost grid cells are not updated by the FDTD step, so waves
+  still reflect there; this is not a transparent boundary)
+3. **Wave Sources**: every step each slit adds A·sin(2π(f t − x/λ)) to the cells of its opening, with adjustable
+   amplitude, frequency, wavelength and width. Because sources are added each step, |u| grows well beyond the
+   fixed −1 to +1 colour range.
 4. **Obstacles**: Implemented as regions where u = 0.
-5. **Wave Packets**: Gaussian-enveloped sinusoidal waves.
-6. **Standing Waves**: Superposition of waves traveling in opposite directions, creating nodes and antinodes.
+5. **Wave Packets**: Gaussian-enveloped sinusoidal sources, added every step.
+6. **Standing Waves**: the mode shape 0.5·sin(mπx/W)·sin(2πt) is added to the whole tank every step, creating
+   nodes and antinodes along x.
 
 ## Web version
 

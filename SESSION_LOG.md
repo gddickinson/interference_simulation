@@ -36,3 +36,8 @@
 `Tank.reset` clears the standing-wave mode, but the desktop selector kept showing the old mode (choosing the same
 mode again then did nothing). `SimulationGUI.reset_simulation` now sets the selector back to "None".
 Regression test: `tests/test_gui.py` (offscreen PyQt5).
+
+### Fix: README claims the code doesn't match
+Corrected the clone URL, Time Scale (scales the source clock, not the whole simulation), wave speed (c = 10·√h, not
+√(gh)), open boundaries (walls still reflect), Reset (obstacles stay), and how slits, wave packets and standing waves
+are driven (added every step).
