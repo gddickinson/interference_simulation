@@ -25,22 +25,24 @@ route('about', async () => {
   <p class="eq">u(t+Δt) = 2u(t) − u(t−Δt) + c²Δt² ∇²u</p>
   <p>on a ${C.tank[0]} × ${C.tank[1]} tank with ${C.resolution} × ${C.resolution} grid points in the desktop app.
   Each frame of the desktop animation (a 50 ms timer) advances the simulation by ${C.frame_dt} time units, split into
-  as many FDTD steps as fit. The colour map is matplotlib's <i>seismic</i>, fixed at −1 (blue) to +1 (red).</p>
+  as many FDTD steps as fit. The colour map is matplotlib's <i>seismic</i>, from minus to plus the largest source amplitude (blue negative, red
+  positive).</p>
   <ul>
-    <li><b>Slits</b> sit on the tank walls, spaced evenly along each side. Every step each slit adds
-      A·sin(2π(f t − x/λ)) to the cells of its opening (three cells deep).</li>
+    <li><b>Slits</b> sit on the tank walls, spaced evenly along each side. They are prescribed (hard) sources, as
+      the dipper of a ripple tank: every step the cells of the opening (three cells deep) are set to
+      A·sin(2π(f t − x/λ)).</li>
     <li><b>Obstacles</b> are discs where u is held at 0.</li>
-    <li><b>Wave packets</b> add a Gaussian-enveloped sinusoid along a direction around a point, every step.</li>
-    <li><b>Interference points</b> add A·sin(2π f t) at a single grid point, every step.</li>
-    <li><b>Standing-wave modes</b> 1 to 5 add 0.5·sin(mπx/W)·sin(2πt) to the whole tank, every step.</li>
+    <li><b>Wave packets</b> drive a sinusoid travelling along a direction around a point, blended into the field
+      with a Gaussian weight (fully prescribed on the centre line, untouched far from it).</li>
+    <li><b>Interference points</b> hold a single grid point at A·sin(2π f t).</li>
+    <li><b>Standing-wave modes</b> 1 to 5 superpose 0.5·sin(mπx/W)·sin(2πt) on the displayed field.</li>
     <li><b>Boundaries</b>: <i>reflective</i> holds u = 0 on the walls; <i>absorbing</i> damps the ten outermost
       cells on each side; <i>open</i> adds no condition at the walls.</li>
   </ul>
   <div class="callout"><b>Things worth knowing when you read the picture.</b>
     <ul>
-      <li>The sources are added to the field on every step rather than setting it, so |u| grows to hundreds or
-        thousands and the fixed −1 to +1 colour range shows mostly the sign of u. Choose "auto" colour range on the Tank
-        page to see amplitudes.</li>
+      <li>Because sources are prescribed, |u| stays of the order of the source amplitude. The "auto" colour range
+        on the Tank page rescales to the field actually present (useful for weak far-field waves).</li>
       <li>The outer ring of grid cells is never updated by the FDTD stencil, so with <i>open</i> boundaries waves
         still reflect from the walls; it is not a transparent boundary.</li>
       <li>With <i>absorbing</i> boundaries the edge damping also covers the slits (which sit on the walls), so slit

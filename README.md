@@ -41,7 +41,7 @@ python main.py
 
 5. **Adding Elements**:
 - Click "Add Obstacle" to place a random circular obstacle in the tank.
-- "Add Wave Packet" adds a Gaussian-enveloped wave source at a random position (it keeps driving the tank every step).
+- "Add Wave Packet" adds a Gaussian-weighted travelling-wave source at a random position (it keeps driving the tank).
 - "Add Interference Point" places a point source of waves.
 
 6. **Standing Waves**: Select a standing wave mode from the dropdown to visualize different harmonic patterns.
@@ -74,12 +74,13 @@ Key aspects of the simulation:
 - Absorbing: Gradual dampening near edges
 - Open: no extra condition at the walls (the outermost grid cells are not updated by the FDTD step, so waves
   still reflect there; this is not a transparent boundary)
-3. **Wave Sources**: every step each slit adds A·sin(2π(f t − x/λ)) to the cells of its opening, with adjustable
-   amplitude, frequency, wavelength and width. Because sources are added each step, |u| grows well beyond the
-   fixed −1 to +1 colour range.
+3. **Wave Sources**: slits are prescribed (hard) sources, like the dipper of a ripple tank: every step the cells of
+   the opening are set to A·sin(2π(f t − x/λ)), with adjustable amplitude, frequency, wavelength and width. The
+   field therefore stays of the order of A, and the plot's colour range is ± the largest source amplitude.
 4. **Obstacles**: Implemented as regions where u = 0.
-5. **Wave Packets**: Gaussian-enveloped sinusoidal sources, added every step.
-6. **Standing Waves**: the mode shape 0.5·sin(mπx/W)·sin(2πt) is added to the whole tank every step, creating
+5. **Wave Packets**: a sinusoid travelling along a direction, prescribed on the packet's centre line and blended
+   into the field with a Gaussian weight. Interference points hold one grid point at A·sin(2π f t).
+6. **Standing Waves**: the mode shape 0.5·sin(mπx/W)·sin(2πt) is superposed on the displayed field, creating
    nodes and antinodes along x.
 
 ## Web version

@@ -61,6 +61,7 @@ class Tank:
         self.wave_packets = []
         self.interference_points = []
         self.standing_wave_mode = None
+        self.time = 0.0
 
     def update_distance_map(self):
         self.distance_map.fill(np.inf)
@@ -139,8 +140,9 @@ class Tank:
             else:
                 continue  # Skip if slit is not on the edge
 
+            # Prescribed (hard) source: the slit cells oscillate with amplitude A, as in a ripple tank's dipper.
             slit_wave = slit.amplitude * np.sin(2 * np.pi * (slit.frequency * time - self.X[y_range, x_range] / slit.wavelength))
-            self.u[y_range, x_range] += slit_wave
+            self.u[y_range, x_range] = slit_wave
 
         # Generate wave packets
         for packet in self.wave_packets:
@@ -156,9 +158,10 @@ class Tank:
 
             distance = (self.X[y_range, x_range] - x) * direction[0] + (self.Y[y_range, x_range] - y) * direction[1]
             gaussian = np.exp(-(distance**2) / (2 * width**2))
-            packet_wave = amplitude * np.sin(2 * np.pi * (frequency * time - distance / wavelength)) * gaussian
+            packet_wave = amplitude * np.sin(2 * np.pi * (frequency * time - distance / wavelength))
 
-            self.u[y_range, x_range] += packet_wave
+            # Prescribed oscillation weighted by the Gaussian envelope (1 at the centre line, fading to the free field)
+            self.u[y_range, x_range] = (1 - gaussian) * self.u[y_range, x_range] + gaussian * packet_wave
 
         # Generate interference points
         for point in self.interference_points:
@@ -166,14 +169,10 @@ class Tank:
             amplitude = point['amplitude']
             frequency = point['frequency']
             x_idx, y_idx = int(x / self.dx), int(y / self.dy)
-            self.u[y_idx, x_idx] += amplitude * np.sin(2 * np.pi * frequency * time)
+            self.u[y_idx, x_idx] = amplitude * np.sin(2 * np.pi * frequency * time)
 
-        # Generate standing wave
-        if self.standing_wave_mode is not None:
-            mode = self.standing_wave_mode
-            amplitude = 0.5  # Adjust as needed
-            standing_wave = amplitude * np.sin(mode * np.pi * self.X / self.width) * np.sin(2 * np.pi * time)
-            self.u += standing_wave
+        # The standing wave is superposed on the displayed field (see field()), not accumulated into u
+        self.time = time
 
         # Handle boundary conditions
         if self.boundary_type == "open":
@@ -189,6 +188,28 @@ class Tank:
             self.u[:, :edge_width] *= edge_factor.T
             self.u[:, -edge_width:] *= edge_factor[::-1].T
 
+
+    def standing_wave(self):
+        """Standing-wave mode m at the current time: 0.5 sin(m pi x / W) sin(2 pi t) (zeros if no mode)."""
+        if self.standing_wave_mode is None:
+            return np.zeros_like(self.u)
+        mode = self.standing_wave_mode
+        amplitude = 0.5
+        return amplitude * np.sin(mode * np.pi * self.X / self.width) * np.sin(2 * np.pi * self.time)
+
+    def field(self):
+        """The displayed wave field: propagating waves u plus the superposed standing-wave mode."""
+        if self.standing_wave_mode is None:
+            return self.u
+        return self.u + self.standing_wave()
+
+    def colour_range(self):
+        """Symmetric colour limit for plotting: the largest source amplitude (1 if there are no sources)."""
+        amps = [s.amplitude for s in self.slits] + [p['amplitude'] for p in self.wave_packets]
+        amps += [p['amplitude'] for p in self.interference_points]
+        if self.standing_wave_mode is not None:
+            amps.append(0.5)
+        return max(amps) if amps and max(amps) > 0 else 1
 
     def add_obstacle(self, obstacle):
         self.obstacles.append(obstacle)
@@ -236,10 +257,12 @@ class Tank:
         self.wave_packets.clear()
         self.interference_points.clear()
         self.standing_wave_mode = None
+        self.time = 0.0
 
     def plot(self, ax):
-        vmin, vmax = -1, 1  # Fixed scale for better contrast
-        im = ax.imshow(self.u, cmap='seismic', animated=True,
+        vmax = self.colour_range()  # +- the largest source amplitude
+        vmin = -vmax
+        im = ax.imshow(self.field(), cmap='seismic', animated=True,
                        extent=[0, self.width, 0, self.height],
                        vmin=vmin, vmax=vmax, origin='lower')
         # Add markers for slits

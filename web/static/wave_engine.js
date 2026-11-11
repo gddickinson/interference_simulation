@@ -39,6 +39,7 @@ export class Tank {
     this.wavePackets = [];
     this.interferencePoints = [];
     this.standingWaveMode = null;
+    this.time = 0;
   }
 
   updateDistanceMap() {
@@ -100,8 +101,8 @@ export class Tank {
       else if (yi === 0) { c0 = Math.max(0, xi - h); c1 = Math.min(n, xi + h + 1); r0 = 0; r1 = 3; }
       else if (yi === n - 1) { c0 = Math.max(0, xi - h); c1 = Math.min(n, xi + h + 1); r0 = n - 3; r1 = n; }
       else continue;
-      for (let i = r0; i < r1; i++) for (let j = c0; j < c1; j++)
-        u[i * n + j] += s.amplitude * Math.sin(TWO_PI * (s.frequency * time - x[j] / s.wavelength));
+      for (let i = r0; i < r1; i++) for (let j = c0; j < c1; j++)   // prescribed (hard) source
+        u[i * n + j] = s.amplitude * Math.sin(TWO_PI * (s.frequency * time - x[j] / s.wavelength));
     }
 
     for (const p of this.wavePackets) {
@@ -112,22 +113,16 @@ export class Tank {
       for (let i = r0; i < r1; i++) for (let j = c0; j < c1; j++) {
         const d = (x[j] - px) * d0 + (y[i] - py) * d1;
         const g = Math.exp(-(d ** 2) / den);
-        u[i * n + j] += p.amplitude * Math.sin(TWO_PI * (p.frequency * time - d / p.wavelength)) * g;
+        const wave = p.amplitude * Math.sin(TWO_PI * (p.frequency * time - d / p.wavelength));
+        u[i * n + j] = (1 - g) * u[i * n + j] + g * wave;   // prescribed oscillation, Gaussian-weighted
       }
     }
 
     for (const p of this.interferencePoints) {
       const xi = Math.trunc(p.position[0] / this.dx), yi = Math.trunc(p.position[1] / this.dy);
-      u[yi * n + xi] += p.amplitude * Math.sin(TWO_PI * p.frequency * time);
+      u[yi * n + xi] = p.amplitude * Math.sin(TWO_PI * p.frequency * time);
     }
-
-    if (this.standingWaveMode !== null) {
-      const m = this.standingWaveMode, st = Math.sin(TWO_PI * time);
-      for (let j = 0; j < n; j++) {
-        const v = 0.5 * Math.sin(m * Math.PI * x[j] / this.width) * st;
-        for (let i = 0; i < n; i++) u[i * n + j] += v;
-      }
-    }
+    this.time = time;   // the standing wave is superposed in field(), not accumulated into u
 
     if (this.boundaryType === 'absorbing') {
       const ew = 10, ef = linspace(0, 1, ew);
@@ -141,6 +136,24 @@ export class Tank {
         u[i * n + n - ew + a] *= ef[ew - 1 - a];
       }
     }
+  }
+
+  // Standing-wave mode m at the current time: 0.5 sin(m pi x / W) sin(2 pi t), superposed on u for display.
+  field() {
+    if (this.standingWaveMode === null) return this.u;
+    const n = this.resolution, out = new Float64Array(this.u), m = this.standingWaveMode, st = Math.sin(2 * Math.PI * this.time);
+    for (let j = 0; j < n; j++) {
+      const v = 0.5 * Math.sin(m * Math.PI * this.x[j] / this.width) * st;
+      for (let i = 0; i < n; i++) out[i * n + j] = this.u[i * n + j] + v;
+    }
+    return out;
+  }
+  // Tank.colour_range: the largest source amplitude (1 if there are no sources).
+  colourRange() {
+    const a = [...this.slits, ...this.wavePackets, ...this.interferencePoints].map(s => s.amplitude);
+    if (this.standingWaveMode !== null) a.push(0.5);
+    const m = a.length ? Math.max(...a) : 0;
+    return m > 0 ? m : 1;
   }
 
   addObstacle(position, radius) { this.obstacles.push({ position, radius }); this.updateBoundary(); }
@@ -158,7 +171,7 @@ export class Tank {
   reset() {
     this.u.fill(0); this.uPrev.fill(0);
     this.updateBoundary(); this.updateDistanceMap();
-    this.wavePackets = []; this.interferencePoints = []; this.standingWaveMode = null;
+    this.wavePackets = []; this.interferencePoints = []; this.standingWaveMode = null; this.time = 0;
   }
 }
 

@@ -72,13 +72,13 @@ def colormap():
 
 @app.get("/api/reference/{slug}")
 def reference(slug: str):
-    """The Python tank (simulation.py) run for one example set-up: field u after REFERENCE_FRAMES desktop frames at
+    """The Python tank (simulation.py) run for one example set-up: displayed field (Tank.field) after REFERENCE_FRAMES desktop frames at
     REFERENCE_RES x REFERENCE_RES, as little-endian float64 in base64 (row 0 = bottom)."""
     setup = next((s for s in EXAMPLE_SETUPS if s["slug"] == slug), None)
     if setup is None:
         raise HTTPException(404, f"unknown setup {slug}")
     sim = run(setup, REFERENCE_FRAMES, REFERENCE_RES)
-    u = np.ascontiguousarray(sim.tank.u, dtype="<f8")
+    u = np.ascontiguousarray(sim.tank.field(), dtype="<f8")
     return {"slug": slug, "resolution": REFERENCE_RES, "frames": REFERENCE_FRAMES, "time": sim.time,
             "steps_per_frame": int(FRAME_DT / sim.tank.dt), "max_abs": float(np.abs(u).max()),
             "u_b64": base64.b64encode(u.tobytes()).decode()}

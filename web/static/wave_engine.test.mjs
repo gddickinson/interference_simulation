@@ -32,8 +32,12 @@ for (const ref of F.cases) {
     let worst = 0;
     ref.u.forEach((v, k) => { worst = Math.max(worst, rel(t.u[k], v, scale)); });
     assert.ok(worst < 1e-9, `max |u_js - u_py| / max|u| = ${worst}`);
+    const fs = t.field().reduce((a, v) => a + v, 0);
+    assert.ok(rel(fs, ref.field_sum, scale * ref.u.length) < 1e-9, `field sum ${fs} vs ${ref.field_sum}`);
+    assert.equal(t.colourRange(), ref.colour_range);
     const ps = t.uPrev.reduce((s, v) => s + v, 0);
     assert.ok(rel(ps, ref.u_prev_sum, scale * ref.u.length) < 1e-9, `u_prev sum ${ps} vs ${ref.u_prev_sum}`);
+    if (!c.slug.includes('standing')) assert.ok(scale < 5 * ref.colour_range, 'bounded by 5 x source amplitude');
     console.log(`      max |u| ${scale.toFixed(3)}, max relative difference ${worst.toExponential(2)}`);
   });
 }
@@ -55,6 +59,16 @@ ok('no slits: field stays finite (Fix NaN wave field when the tank has no slits)
   sim.tank.addInterferencePoint([10, 10], 1, 1);
   sim.step();
   assert.ok(sim.tank.u.every(Number.isFinite));
+});
+
+ok('prescribed sources stay bounded: 300 frames, every boundary, max |u| < 5 A', () => {
+  for (const boundary of ['reflective', 'absorbing', 'open']) {
+    const sim = createSimulation({ bottom: 2 }, { resolution: 60 });
+    sim.tank.setBoundaryType(boundary);
+    let peak = 0;
+    for (let f = 0; f < 300; f++) { sim.step(); for (const v of sim.tank.u) peak = Math.max(peak, Math.abs(v)); }
+    assert.ok(peak < 50, `${boundary}: peak ${peak}`);
+  }
 });
 
 console.log(`wave_engine: ${n} checks passed (${F.cases.length} Python reference cases at ${F.resolution} x ${F.resolution})`);

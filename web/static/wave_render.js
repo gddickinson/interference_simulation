@@ -1,5 +1,5 @@
-// Canvas rendering of the wave field the way Tank.plot draws it: matplotlib's 'seismic' colour map, vmin -1 / vmax 1
-// (or a chosen range), origin at the bottom left, slits as dots and obstacles as circle outlines.
+// Canvas rendering of the wave field the way Tank.plot draws it: matplotlib's 'seismic' colour map, vmin/vmax at
+// -/+ the largest source amplitude (Tank.colour_range) or a chosen range, origin at the bottom left, slits as dots and obstacles as circle outlines.
 
 // matplotlib _seismic_data, evenly spaced, expanded to 256 entries exactly as LinearSegmentedColormap.from_list does.
 const ANCHORS = [[0, 0, 0.3], [0, 0, 1], [1, 1, 1], [1, 0, 0], [0.5, 0, 0]];
@@ -36,9 +36,9 @@ export function robustMax(u) {
 
 const off = typeof document !== 'undefined' ? document.createElement('canvas') : null;
 
-// Draw tank.u into ctx (any canvas size). opts: range (vmax; vmin = -range), marks (draw slits/obstacles/sources).
-export function drawField(ctx, tank, { range = 1, marks = true } = {}) {
-  const n = tank.resolution, u = tank.u;
+// Draw the field (default tank.field()) into ctx (any canvas size). opts: range (vmax; vmin = -range), marks.
+export function drawField(ctx, tank, { range = 1, marks = true, values = null } = {}) {
+  const n = tank.resolution, u = values || tank.field();
   if (off.width !== n) { off.width = n; off.height = n; }
   const octx = off.getContext('2d'), img = octx.createImageData(n, n), d = img.data;
   for (let i = 0; i < n; i++) {

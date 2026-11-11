@@ -9,8 +9,8 @@ export function loadSetup() {
   return setupPromise;
 }
 
-// Colour range: 'desktop' is Tank.plot's fixed vmin -1 / vmax 1; 'auto' scales to the 99th percentile of |u|.
-export function colourRange(tank, mode) { return mode === 'auto' ? robustMax(tank.u) : 1; }
+// Colour range: 'desktop' is Tank.plot's +- largest source amplitude; 'auto' scales to the 99th percentile of |u|.
+export function colourRange(tank, mode) { return mode === 'auto' ? robustMax(tank.field()) : tank.colourRange(); }
 
 export function draw(canvas, sim, mode = 'desktop', marks = true) {
   const range = colourRange(sim.tank, mode);

@@ -74,7 +74,7 @@ route('tank', async (_args, query) => {
   const readout = document.getElementById('readout');
   function show(range) {
     const t = sim.tank;
-    let mx = 0; for (const v of t.u) { const a = Math.abs(v); if (a > mx) mx = a; }
+    let mx = 0; for (const v of t.field()) { const a = Math.abs(v); if (a > mx) mx = a; }
     const rows = [['time t', sim.time.toFixed(3)], ['wave speed c = 10 √depth', fmtNum(t.c)], ['FDTD step dt', t.dt.toExponential(3)],
       ['steps per frame', sim.stepsPerFrame(FRAME_DT)], ['grid', `${t.resolution} x ${t.resolution}`], ['max |u|', fmtNum(mx)],
       ['slits · obstacles · packets · points', `${t.slits.length} · ${t.obstacles.length} · ${t.wavePackets.length} · ${t.interferencePoints.length}`]];

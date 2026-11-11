@@ -41,3 +41,13 @@ Regression test: `tests/test_gui.py` (offscreen PyQt5).
 Corrected the clone URL, Time Scale (scales the source clock, not the whole simulation), wave speed (c = 10·√h, not
 √(gh)), open boundaries (walls still reflect), Reset (obstacles stay), and how slits, wave packets and standing waves
 are driven (added every step).
+
+## 2026-11-11 (later) — Physics fixes approved by George (Python and JS engines kept matching)
+
+### Fix 1: sources are prescribed oscillations (bounded field)
+Slits and interference points now *set* their cells to A·sin(...) (hard sources, ripple-tank dipper) instead of adding
+to u every step; wave packets blend the prescribed travelling sinusoid in with their Gaussian weight; the standing-wave
+mode is superposed on the displayed field (`Tank.field()`), not accumulated. Max |u| now stays at the source amplitude
+(10 for default slits; was 10^3–10^4). Plot colour range is ± the largest source amplitude (`Tank.colour_range()`,
+used by `Tank.plot` and the GUI); the web keeps an "auto" option. Tests: `tests/test_physics.py` (bounded over 300
+frames for all boundaries, points/packets/standing, colour range) and a node check.

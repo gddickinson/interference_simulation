@@ -27,11 +27,12 @@ route('check', async () => {
     for (let f = 0; f < ref.frames; f++) sim.step(FRAME_DT);
     const py = decodeF64(ref.u_b64);
     let worst = 0;
-    py.forEach((v, k) => { worst = Math.max(worst, Math.abs(v - sim.tank.u[k])); });
+    const js = sim.tank.field();
+    py.forEach((v, k) => { worst = Math.max(worst, Math.abs(v - js[k])); });
     const rel = worst / Math.max(1, ref.max_abs);
-    const pyTank = { ...sim.tank, u: py, slits: sim.tank.slits, obstacles: sim.tank.obstacles };
-    drawField(document.getElementById('py-' + s.slug).getContext('2d'), pyTank);
-    drawField(document.getElementById('js-' + s.slug).getContext('2d'), sim.tank);
+    const range = sim.tank.colourRange();
+    drawField(document.getElementById('py-' + s.slug).getContext('2d'), sim.tank, { range, values: py });
+    drawField(document.getElementById('js-' + s.slug).getContext('2d'), sim.tank, { range });
     const el = document.getElementById('res-' + s.slug);
     el.className = 'mono ' + (rel < 1e-9 ? 'ok' : 'err');
     el.textContent = `${ref.frames} frames × ${ref.steps_per_frame} steps, t = ${ref.time.toFixed(3)}, max |u| ${fmtNum(ref.max_abs)}; ` +

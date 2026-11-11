@@ -231,8 +231,10 @@ class SimulationGUI(QMainWindow):
 
     def update_plot(self):
         self.simulation.step(0.05)
-        self.im.set_array(self.simulation.tank.u)
-        self.im.set_clim(vmin=-1, vmax=1)  # Fixed color scaling
+        tank = self.simulation.tank
+        self.im.set_array(tank.field())
+        vmax = tank.colour_range()  # +- the largest source amplitude
+        self.im.set_clim(vmin=-vmax, vmax=vmax)
         self.canvas.draw()
 
 if __name__ == '__main__':
