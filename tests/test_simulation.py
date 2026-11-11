@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from simulation import Obstacle, Simulation, Slit, Tank  # noqa: E402
+from sim_setup import create_simulation  # noqa: E402
 
 
 def test_no_slits_field_stays_finite():
@@ -37,3 +38,11 @@ def test_obstacles_block_waves_with_open_boundaries():
             sim.step(0.05)
         assert np.abs(tank.u).max() > 0
         assert np.abs(tank.u[inside]).max() == 0, boundary
+
+
+def test_create_simulation_places_slits_evenly():
+    """sim_setup.create_simulation (moved out of main.py) builds the same tank as before."""
+    sim = create_simulation({'bottom': 2, 'left': 1})
+    assert [s.position for s in sim.tank.slits] == [(20 / 3, 0), (40 / 3, 0), (0, 10.0)]
+    assert sim.tank.resolution == 200 and sim.tank.boundary_type == "reflective"
+    assert all((s.width, s.amplitude, s.frequency, s.wavelength) == (0.5, 10, 1, 2) for s in sim.tank.slits)

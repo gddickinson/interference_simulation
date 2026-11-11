@@ -8,6 +8,8 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from simulation import Slit, Obstacle, Tank, Simulation
+from sim_setup import (create_simulation, CONTROL_SPECS, BOUNDARY_TYPES, STANDING_WAVE_MODES,
+                       SIDES)
 
 
 
@@ -44,29 +46,28 @@ class SimulationGUI(QMainWindow):
 
         # Global controls
         controls_layout.addWidget(QLabel('Global Controls'))
-        self.time_scale_slider = self.create_slider('Time Scale', 1, 200, 100, self.update_time_scale)
+        self.time_scale_slider = self.spec_slider('time_scale', self.simulation.time_scale, self.update_time_scale)
         controls_layout.addWidget(self.time_scale_slider)
 
         # Depth slider
-        self.depth_slider = self.create_slider('Depth', 1, 100, int(self.simulation.tank.depth * 10),
-                                               self.update_depth)
+        self.depth_slider = self.spec_slider('depth', self.simulation.tank.depth, self.update_depth)
         controls_layout.addWidget(self.depth_slider)
 
         # Decay factor slider
-        self.decay_slider = self.create_slider('Wave Decay', 900, 1000, int(self.simulation.tank.decay_factor * 1000),
-                                               self.update_decay_factor)
+        self.decay_slider = self.spec_slider('decay_factor', self.simulation.tank.decay_factor,
+                                             self.update_decay_factor)
         controls_layout.addWidget(self.decay_slider)
 
         # Boundary type selection
         self.boundary_combo = QComboBox()
-        self.boundary_combo.addItems(["Reflective", "Absorbing", "Open"])
+        self.boundary_combo.addItems(BOUNDARY_TYPES)
         self.boundary_combo.currentTextChanged.connect(self.change_boundary_type)
         controls_layout.addWidget(QLabel("Boundary Type:"))
         controls_layout.addWidget(self.boundary_combo)
 
         # Standing wave mode selector
         self.standing_wave_combo = QComboBox()
-        self.standing_wave_combo.addItems(["None", "1", "2", "3", "4", "5"])
+        self.standing_wave_combo.addItems(STANDING_WAVE_MODES)
         self.standing_wave_combo.currentTextChanged.connect(self.change_standing_wave_mode)
         controls_layout.addWidget(QLabel("Standing Wave Mode:"))
         controls_layout.addWidget(self.standing_wave_combo)
@@ -77,16 +78,16 @@ class SimulationGUI(QMainWindow):
         for i, slit in enumerate(self.simulation.tank.slits):
             slit_layout = QVBoxLayout()
             slit_layout.addWidget(QLabel(f'Slit {i+1}'))
-            amplitude_slider = self.create_slider(f'Amplitude', 0, 200, int(slit.amplitude * 10),
+            amplitude_slider = self.spec_slider('amplitude', slit.amplitude,
                                                   lambda value, s=slit: self.update_slit_amplitude(s, value))
             slit_layout.addWidget(amplitude_slider)
-            wavelength_slider = self.create_slider(f'Wavelength', 1, 200, int(slit.wavelength * 10),
+            wavelength_slider = self.spec_slider('wavelength', slit.wavelength,
                                                    lambda value, s=slit: self.update_slit_wavelength(s, value))
             slit_layout.addWidget(wavelength_slider)
-            frequency_slider = self.create_slider(f'Frequency', 1, 200, int(slit.frequency * 100),
+            frequency_slider = self.spec_slider('frequency', slit.frequency,
                                                   lambda value, s=slit: self.update_slit_frequency(s, value))
             slit_layout.addWidget(frequency_slider)
-            width_slider = self.create_slider(f'Width', 1, 100, int(slit.width * 100),
+            width_slider = self.spec_slider('width', slit.width,
                                               lambda value, s=slit: self.update_slit_width(s, value))
             slit_layout.addWidget(width_slider)
             controls_layout.addLayout(slit_layout)
@@ -123,6 +124,11 @@ class SimulationGUI(QMainWindow):
         self.ax.set_ylabel('Y')
         self.timer = self.canvas.new_timer(interval=50)
         self.timer.add_callback(self.update_plot)
+
+    def spec_slider(self, key, value, callback):
+        """Slider from sim_setup.CONTROL_SPECS (shared with the web interface); default = int(value * scale)."""
+        name, min_val, max_val, scale = CONTROL_SPECS[key]
+        return self.create_slider(name, min_val, max_val, int(value * scale), callback)
 
     def create_slider(self, name, min_val, max_val, default_val, callback):
         slider_layout = QVBoxLayout()
@@ -225,36 +231,10 @@ class SimulationGUI(QMainWindow):
         self.im.set_clim(vmin=-1, vmax=1)  # Fixed color scaling
         self.canvas.draw()
 
-def create_simulation(slit_config, depth=1.0, decay_factor=0.999):
-    width, height = 20, 20
-    resolution = 200
-    slits = []
-
-    for side, num_slits in slit_config.items():
-        for i in range(num_slits):
-            if side == 'bottom':
-                x = width * (i + 1) / (num_slits + 1)
-                y = 0
-            elif side == 'top':
-                x = width * (i + 1) / (num_slits + 1)
-                y = height
-            elif side == 'left':
-                x = 0
-                y = height * (i + 1) / (num_slits + 1)
-            elif side == 'right':
-                x = width
-                y = height * (i + 1) / (num_slits + 1)
-
-            slits.append(Slit((x, y), width=0.5, amplitude=10, frequency=1, wavelength=2))
-
-    tank = Tank(width, height, resolution, slits, depth=depth, decay_factor=decay_factor)
-    tank.set_boundary_type("reflective")  # Set default boundary type
-    return Simulation(tank)
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
-    sides = ['bottom', 'top', 'left', 'right']
+    sides = SIDES
     slit_config = {}
 
     print("Enter the number of slits for each side (0 for no slits):")

@@ -75,6 +75,31 @@ Key aspects of the simulation:
 5. **Wave Packets**: Gaussian-enveloped sinusoidal waves.
 6. **Standing Waves**: Superposition of waves traveling in opposite directions, creating nodes and antinodes.
 
+## Web version
+
+The simulation also runs in the browser: **https://gddickinson.github.io/interference_simulation/** (static site,
+published from `main` by `.github/workflows/pages.yml`). `web/static/wave_engine.js` is a line-by-line JavaScript port
+of `simulation.py`; a node test checks it against fields computed by the Python code
+(`tests/fixtures/wave_reference.json`), and the Cross-check page compares both live.
+
+Pages: **Tank** (every desktop control plus the slit-count prompt, example set-ups, grid size, automatic colour range,
+click to place obstacles/sources, PNG export), **Examples**, **Cross-check** (Python vs browser) and **About**.
+
+### Run the web app
+
+```
+pip install -r requirements-web.txt
+python run_web.py            # http://127.0.0.1:8230
+python -m pytest -q tests    # simulation + web tests (node 18+ for the engine test)
+python scripts/build_static.py   # static site in site/
+```
+
+| Home | Tank |
+|---|---|
+| ![Home page with a live two-slit tank](docs/img/home.png) | ![Simulator with controls](docs/img/tank.png) |
+| **Examples** | **Cross-check** |
+| ![Example set-ups running live](docs/img/examples.png) | ![Python and browser fields side by side](docs/img/check.png) |
+
 ## Contributing
 
 Contributions to improve the simulation or add new features are welcome. Please fork the repository and submit a pull request with your changes.

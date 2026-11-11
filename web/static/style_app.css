@@ -1,0 +1,26 @@
+/* Wave Interference Simulation: seismic blue / red accents on the shared neon theme, plus page styles. */
+:root { --accent:#4da3ff; --accent2:#ff5a5f; --accent3:#9ad7ff; --glow:rgba(77,163,255,.16); }
+button, .btn, .seg button.on { color:#020a18; }
+main:focus-visible { outline:none; }
+.herotank { align-items:center; }
+.fig { margin:0; } .fig canvas, .sim .view canvas { width:100%; height:auto; aspect-ratio:1; display:block; background:#000; border:1px solid var(--line); border-radius:6px; }
+.fig figcaption { margin-top:6px; }
+.door b { color:var(--accent); }
+.sim { display:grid; grid-template-columns:320px 1fr; gap:20px; align-items:start; margin-top:14px; }
+.sim .controls { background:rgba(11,12,26,.92); border:1px solid var(--line); border-radius:6px; padding:10px 16px 16px; max-height:calc(100vh - 110px); overflow-y:auto; position:sticky; top:84px; }
+.sim .view { position:sticky; top:84px; }
+.sides { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; } .sides label { margin:4px 0 2px; }
+.sides input { padding:6px; }
+details.slit { border:1px solid var(--line); border-radius:4px; padding:4px 10px; margin:6px 0; }
+details.slit summary { cursor:pointer; font:13px var(--mono); color:var(--accent3); }
+.readout { font:13px var(--mono); background:rgba(3,5,10,.9); border:1px solid var(--line); border-radius:4px; padding:10px 12px; margin-top:12px; }
+.readout div { display:flex; justify-content:space-between; gap:10px; } .readout b { color:var(--accent); }
+.legend { display:flex; align-items:center; gap:8px; font:12px var(--mono); color:var(--mute); margin-top:8px; }
+.legend canvas { flex:1; height:12px; min-width:0; border-radius:2px; }
+#field { cursor:crosshair; } #field:focus-visible { outline:2px solid var(--accent3); }
+.gal canvas { width:100%; height:auto; aspect-ratio:1; display:block; border-radius:4px; margin-bottom:8px; background:#000; }
+.pair { display:grid; grid-template-columns:1fr 1fr; gap:8px; } .pair canvas { width:100%; aspect-ratio:1; display:block; border-radius:3px; background:#000; }
+.pair figure { margin:0; } .pair figcaption { font:12px var(--mono); color:var(--mute); }
+@media (max-width:860px) {
+  .sim, .herotank { grid-template-columns:1fr; } .sim .controls { position:static; max-height:none; } .sim .view { order:-1; position:static; }
+}
