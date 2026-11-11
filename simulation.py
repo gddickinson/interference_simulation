@@ -68,6 +68,10 @@ class Tank:
             x, y = slit.position
             slit_distances = np.sqrt((self.X - x)**2 + (self.Y - y)**2)
             self.distance_map = np.minimum(self.distance_map, slit_distances)
+        if not self.slits:
+            # No slits: no distance-based decay (inf / inf used to make the whole field NaN)
+            self.distance_map.fill(0)
+            return
         # Normalize distance map
         self.distance_map /= np.max(self.distance_map)
 
